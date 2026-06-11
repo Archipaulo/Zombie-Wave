@@ -1859,10 +1859,24 @@ function buildWorld(){
   const d=55; sun.shadow.camera.left=-d;sun.shadow.camera.right=d;sun.shadow.camera.top=d;sun.shadow.camera.bottom=-d;
   sun.shadow.camera.far=160; sc.add(sun); Game.moon=sun; Game.sun=sun;
   // visible sun + glow halo (ignore fog so they stay bright)
-  const sunMesh=new THREE.Mesh(new THREE.SphereGeometry(7,18,18), new THREE.MeshBasicMaterial({color:0xfff4c8,fog:false}));
+  const sunMesh=new THREE.Mesh(new THREE.SphereGeometry(7,18,18), new THREE.MeshBasicMaterial({color:0xfff4c8,fog:false,transparent:true}));
   sunMesh.position.copy(sunDir.clone().multiplyScalar(240)); sc.add(sunMesh); Game.sunMesh=sunMesh;
   const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture(),color:0xffffff,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));
   glow.scale.set(95,95,1); glow.position.copy(sunMesh.position); sc.add(glow); Game.sunGlow=glow;
+  // night sky: stars + moon (revealed gradually at dusk)
+  (function(){
+    const sN=260, sPos=new Float32Array(sN*3), v=new THREE.Vector3();
+    for(let i=0;i<sN;i++){ v.set(rand(-1,1),rand(0.08,1),rand(-1,1)).normalize().multiplyScalar(235);
+      sPos[i*3]=v.x; sPos[i*3+1]=v.y; sPos[i*3+2]=v.z; }
+    const sg=new THREE.BufferGeometry(); sg.setAttribute('position',new THREE.BufferAttribute(sPos,3));
+    Game.stars=new THREE.Points(sg,new THREE.PointsMaterial({color:0xcfe0ff,size:1.7,sizeAttenuation:false,transparent:true,opacity:0,fog:false,depthWrite:false}));
+    Game.stars.visible=false; Game.stars.frustumCulled=false; sc.add(Game.stars);
+    const moonDir=new THREE.Vector3(-0.55,0.6,-0.45).normalize();
+    Game.moonMesh=new THREE.Mesh(new THREE.SphereGeometry(6,16,16),new THREE.MeshBasicMaterial({color:0xdfe8ff,fog:false,transparent:true,opacity:0}));
+    Game.moonMesh.position.copy(moonDir).multiplyScalar(238); Game.moonMesh.visible=false; sc.add(Game.moonMesh);
+    Game.moonGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture(),color:0xb8ccff,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,transparent:true,opacity:0}));
+    Game.moonGlow.scale.set(55,55,1); Game.moonGlow.position.copy(Game.moonMesh.position); Game.moonGlow.visible=false; sc.add(Game.moonGlow);
+  })();
 
   Game.obstacles.length=0;
   Game.fxFires=[];
@@ -2620,30 +2634,89 @@ function resolveWeather(){
   if(w==='auto'){ const r=Math.random(); w = r<0.5?'clear' : r<0.72?'fog' : r<0.9?'rain':'night'; }
   return w;
 }
+// per-weather lighting parameters (used by both instant apply and gradual transitions)
+const WPARAMS={
+  clear:{fog:0xcfe7f5,density:0.0065,hemi:1.25,amb:0.28,sun:1.7,sunCol:0xfff2d2,exp:1.15,sky:0x69b8f5,sunVis:1,stars:0},
+  fog:  {fog:0xb6c2cc,density:0.024, hemi:0.95,amb:0.34,sun:0.8,sunCol:0xeef2f5,exp:1.02,sky:0xaebecb,sunVis:0,stars:0},
+  rain: {fog:0x6f7b86,density:0.02,  hemi:0.72,amb:0.30,sun:0.5,sunCol:0xc7d2dc,exp:0.92,sky:0x7e8a96,sunVis:0,stars:0},
+  night:{fog:0x0c1020,density:0.013, hemi:0.42,amb:0.22,sun:0.5,sunCol:0x6f86d8,exp:1.05,sky:0x0a0e18,sunVis:0,stars:1},
+};
 function applyWeather(kind){
-  Game.weather=kind;
+  Game.weather=kind; Game.wTrans=null;
   const sc=Game.scene, fog=sc.fog, r=Game.renderer;
-  const sunVis=(v)=>{ if(Game.sunMesh)Game.sunMesh.visible=v; if(Game.sunGlow)Game.sunGlow.visible=v; };
+  const sunVis=(v)=>{
+    if(Game.sunMesh){ Game.sunMesh.visible=v; Game.sunMesh.material.opacity=v?1:0; }
+    if(Game.sunGlow){ Game.sunGlow.visible=v; Game.sunGlow.material.opacity=v?1:0; }
+  };
+  const nightSky=(v)=>{
+    if(Game.stars){ Game.stars.visible=v; Game.stars.material.opacity=v?0.9:0; }
+    if(Game.moonMesh){ Game.moonMesh.visible=v; Game.moonMesh.material.opacity=v?1:0; }
+    if(Game.moonGlow){ Game.moonGlow.visible=v; Game.moonGlow.material.opacity=v?0.8:0; }
+  };
   // rain off by default
   if(Game.rain){ sc.remove(Game.rain); Game.rain=null; }
   if(kind==='clear'){
     sc.background=Game.skyTex; fog.color.setHex(0xcfe7f5); fog.density=0.0065;
     Game.hemi.intensity=1.25; Game.amb.intensity=0.28; Game.sun.intensity=1.7; Game.sun.color.setHex(0xfff2d2);
-    r.toneMappingExposure=1.15; sunVis(true);
+    r.toneMappingExposure=1.15; sunVis(true); nightSky(false);
   } else if(kind==='fog'){
     sc.background=Game.skyTex; fog.color.setHex(0xb6c2cc); fog.density=0.024;
     Game.hemi.intensity=0.95; Game.amb.intensity=0.34; Game.sun.intensity=0.8; Game.sun.color.setHex(0xeef2f5);
-    r.toneMappingExposure=1.02; sunVis(false);
+    r.toneMappingExposure=1.02; sunVis(false); nightSky(false);
   } else if(kind==='rain'){
     sc.background=Game.skyTex; fog.color.setHex(0x6f7b86); fog.density=0.02;
     Game.hemi.intensity=0.72; Game.amb.intensity=0.30; Game.sun.intensity=0.5; Game.sun.color.setHex(0xc7d2dc);
-    r.toneMappingExposure=0.92; sunVis(false);
+    r.toneMappingExposure=0.92; sunVis(false); nightSky(false);
     Game.rain=buildRain(); sc.add(Game.rain);
   } else if(kind==='night'){
     sc.background=new THREE.Color(0x0a0e18); fog.color.setHex(0x0c1020); fog.density=0.013;
     Game.hemi.intensity=0.42; Game.amb.intensity=0.22; Game.sun.intensity=0.5; Game.sun.color.setHex(0x6f86d8);
-    r.toneMappingExposure=1.05; sunVis(false);
+    r.toneMappingExposure=1.05; sunVis(false); nightSky(true);
   }
+}
+// gradual Minecraft-style dusk/dawn: interpolates sky, fog, lights over several seconds
+function transitionWeather(kind,dur){
+  if(!Game.scene||!Game.renderer){ return; }
+  const P=WPARAMS[kind]||WPARAMS.clear;
+  const cur=WPARAMS[Game.weather]||WPARAMS.clear;
+  const sc=Game.scene;
+  if(Game.rain && kind!=='rain'){ sc.remove(Game.rain); Game.rain=null; }
+  const from={
+    fogC:sc.fog.color.clone(), density:sc.fog.density,
+    hemi:Game.hemi.intensity, amb:Game.amb.intensity, sun:Game.sun.intensity,
+    sunC:Game.sun.color.clone(), exp:Game.renderer.toneMappingExposure,
+    skyC:(sc.background&&sc.background.isColor)?sc.background.clone():new THREE.Color(cur.sky),
+    sunVis:(Game.sunMesh&&Game.sunMesh.visible)?Game.sunMesh.material.opacity:0,
+    stars:(Game.stars&&Game.stars.visible)?Game.stars.material.opacity/0.9:0
+  };
+  const to={fogC:new THREE.Color(P.fog),density:P.density,hemi:P.hemi,amb:P.amb,sun:P.sun,
+    sunC:new THREE.Color(P.sunCol),exp:P.exp,skyC:new THREE.Color(P.sky),sunVis:P.sunVis,stars:P.stars};
+  Game.weather=kind;
+  Game.wTrans={from,to,kind,t:0,dur:dur||9};
+}
+function updateWeatherTransition(dt){
+  const w=Game.wTrans; if(!w) return;
+  w.t+=dt;
+  const k=Math.min(1,w.t/w.dur), s=k*k*(3-2*k);   // smoothstep
+  const f=w.from, t2=w.to, sc=Game.scene;
+  sc.fog.color.copy(f.fogC).lerp(t2.fogC,s);
+  sc.fog.density=lerp(f.density,t2.density,s);
+  Game.hemi.intensity=lerp(f.hemi,t2.hemi,s);
+  Game.amb.intensity=lerp(f.amb,t2.amb,s);
+  Game.sun.intensity=lerp(f.sun,t2.sun,s);
+  Game.sun.color.copy(f.sunC).lerp(t2.sunC,s);
+  Game.renderer.toneMappingExposure=lerp(f.exp,t2.exp,s);
+  Game._skyColor=Game._skyColor||new THREE.Color();
+  Game._skyColor.copy(f.skyC).lerp(t2.skyC,s);
+  sc.background=Game._skyColor;
+  const sv=lerp(f.sunVis,t2.sunVis,s);
+  if(Game.sunMesh){ Game.sunMesh.visible=sv>0.02; Game.sunMesh.material.opacity=sv; }
+  if(Game.sunGlow){ Game.sunGlow.visible=sv>0.02; Game.sunGlow.material.opacity=sv; }
+  const st=lerp(f.stars,t2.stars,s);
+  if(Game.stars){ Game.stars.visible=st>0.02; Game.stars.material.opacity=st*0.9; }
+  if(Game.moonMesh){ Game.moonMesh.visible=st>0.02; Game.moonMesh.material.opacity=st; }
+  if(Game.moonGlow){ Game.moonGlow.visible=st>0.02; Game.moonGlow.material.opacity=st*0.8; }
+  if(k>=1){ const kind=w.kind; Game.wTrans=null; applyWeather(kind); }
 }
 function updateRain(dt){
   const rn=Game.rain; if(!rn) return;
@@ -3352,8 +3425,8 @@ function startWave(n){
   else if(n%4===0){ type='boss'; night=true; }   // every 4th wave: night falls, boss appears
   else { const day=['eliminate','hold','defend','extract','purge']; type=day[(n-1)%day.length]; if(type==='boss') type='eliminate'; }
   // day/night transition
-  if(night){ if(!Game._nightActive){ applyWeather('night'); Game._nightActive=true; } }
-  else if(Game._nightActive){ applyWeather(Game.dayWeather||'clear'); Game._nightActive=false; }
+  if(night){ if(!Game._nightActive){ transitionWeather('night',10); Game._nightActive=true; } }
+  else if(Game._nightActive){ transitionWeather(Game.dayWeather||'clear',10); Game._nightActive=false; }
   Game.obj={type,timer:0,timerMax:0,meter:0,target:100,fill:24,drain:14,done:false,zone:null,quota:0};
   let sub='Tenez la position';
   if(type==='boss'){
@@ -4589,6 +4662,7 @@ function animate(){
     updateShells(dt);
     updateTracers(dt);
     updateRain(dt);
+    updateWeatherTransition(dt);
     updateAbility(dt);
     // low-health heartbeat
     const _hpr=Game.player.hp/Game.player.maxhp;
