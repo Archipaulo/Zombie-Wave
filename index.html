@@ -16,11 +16,20 @@
     --steel2:#1b2018;
     --ink:#05060a;
     --bone:#d7d3c4;
+    --gold:#ffd23c;
+    --glass:rgba(10,14,8,.55);
+    --glass-edge:rgba(155,255,60,.18);
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Rajdhani',sans-serif;color:var(--bone);user-select:none;}
   #app{position:fixed;inset:0;}
   canvas{display:block;position:absolute;inset:0;}
+  ::selection{background:rgba(155,255,60,.3);}
+  ::-webkit-scrollbar{width:9px;height:9px;}
+  ::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:8px;}
+  ::-webkit-scrollbar-thumb{background:rgba(155,255,60,.32);border-radius:8px;border:2px solid transparent;background-clip:content-box;}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(155,255,60,.55);background-clip:content-box;}
+  button:focus-visible{outline:2px solid var(--tox);outline-offset:2px;}
 
   /* ---------- shared overlay ---------- */
   .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -28,25 +37,39 @@
       radial-gradient(120% 120% at 50% 0%, rgba(155,255,60,.05), transparent 45%),
       radial-gradient(140% 140% at 50% 120%, rgba(226,38,28,.10), transparent 55%),
       linear-gradient(180deg, #06080c 0%, #04050a 100%);
-    z-index:30;text-align:center;padding:24px;}
+    z-index:30;text-align:center;padding:24px;animation:ovIn .32s ease both;}
   .overlay::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.06;
     background-image:repeating-linear-gradient(0deg, #fff 0, #fff 1px, transparent 1px, transparent 3px);mix-blend-mode:overlay;}
+  .overlay::before{content:"";position:absolute;inset:0;pointer-events:none;
+    box-shadow:inset 0 0 180px 60px rgba(0,0,0,.55);}
+  .overlay>*{position:relative;z-index:1;}
+  @keyframes ovIn{from{opacity:0;}to{opacity:1;}}
+  @keyframes ovRise{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+  .overlay .title{animation:ovRise .45s cubic-bezier(.2,.9,.3,1) both;}
+  .overlay .panel{animation:ovRise .45s cubic-bezier(.2,.9,.3,1) both .08s;}
   .hidden{display:none !important;}
 
   .title{font-family:'Black Ops One',sans-serif;font-size:clamp(38px,9vw,92px);line-height:.92;letter-spacing:2px;
     color:var(--bone);text-shadow:0 0 18px rgba(155,255,60,.25), 0 6px 0 #000;}
-  .title .acc{color:var(--tox);text-shadow:0 0 26px rgba(155,255,60,.7);}
+  .title .acc{color:var(--tox);text-shadow:0 0 26px rgba(155,255,60,.7);animation:titleGlow 2.6s ease-in-out infinite;}
+  @keyframes titleGlow{0%,100%{text-shadow:0 0 18px rgba(155,255,60,.45);}50%{text-shadow:0 0 34px rgba(155,255,60,.9),0 0 60px rgba(155,255,60,.35);}}
   .tagline{margin-top:10px;font-size:clamp(13px,2.4vw,18px);letter-spacing:6px;text-transform:uppercase;color:#7d8472;}
   .panel{margin-top:34px;display:flex;flex-direction:column;gap:14px;width:min(420px,90vw);}
 
   .btn{position:relative;font-family:'Black Ops One',sans-serif;font-size:clamp(15px,3.4vw,20px);letter-spacing:1px;
-    padding:16px 22px;color:var(--ink);background:var(--tox);border:none;cursor:pointer;clip-path:polygon(0 0,100% 0,100% 70%,94% 100%,0 100%);
-    transition:transform .08s ease, filter .15s ease;text-transform:uppercase;}
-  .btn:hover{filter:brightness(1.12);} .btn:active{transform:translateY(2px) scale(.99);}
+    padding:16px 22px;color:var(--ink);background:linear-gradient(180deg,#b4ff66,var(--tox) 45%,#7ed62a);border:none;cursor:pointer;clip-path:polygon(0 0,100% 0,100% 70%,94% 100%,0 100%);
+    transition:transform .08s ease, filter .15s ease, box-shadow .2s ease;text-transform:uppercase;overflow:hidden;
+    box-shadow:0 4px 14px rgba(155,255,60,.18);}
+  .btn::after{content:"";position:absolute;top:0;bottom:0;left:-80%;width:50%;pointer-events:none;
+    background:linear-gradient(105deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);transition:left .45s ease;}
+  .btn:hover{filter:brightness(1.1);box-shadow:0 6px 22px rgba(155,255,60,.35);}
+  .btn:hover::after{left:130%;}
+  .btn:active{transform:translateY(2px) scale(.99);}
   .btn.ghost{background:transparent;color:var(--tox);border:1px solid var(--tox-dim);clip-path:none;box-shadow:inset 0 0 0 1px rgba(155,255,60,.1);}
-  .btn.ghost:hover{background:rgba(155,255,60,.08);}
-  .btn.red{background:var(--blood);color:#fff;}
-  .btn:disabled{opacity:.35;cursor:not-allowed;filter:grayscale(.6);}
+  .btn.ghost:hover{background:rgba(155,255,60,.08);box-shadow:inset 0 0 0 1px rgba(155,255,60,.25), 0 0 18px rgba(155,255,60,.12);}
+  .btn.red{background:linear-gradient(180deg,#ff5a4e,var(--blood) 50%,#b01a12);color:#fff;box-shadow:0 4px 14px rgba(226,38,28,.25);}
+  .btn.red:hover{box-shadow:0 6px 22px rgba(226,38,28,.45);}
+  .btn:disabled{opacity:.35;cursor:not-allowed;filter:grayscale(.6);box-shadow:none;}
 
   .help{margin-top:26px;font-size:13px;color:#6b7263;line-height:1.9;letter-spacing:1px;max-width:520px;}
   .help b{color:var(--bone);}
@@ -54,16 +77,25 @@
 
   /* ---------- HUD ---------- */
   #hud{position:absolute;inset:0;z-index:10;pointer-events:none;font-weight:600;}
-  #crosshair{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%);}
-  #crosshair span{position:absolute;background:rgba(215,211,196,.85);box-shadow:0 0 4px #000;}
+  #hud::before{content:"";position:absolute;inset:0;pointer-events:none;
+    box-shadow:inset 0 0 120px 30px rgba(0,0,0,.38);}
+  #crosshair{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%);transition:transform .1s ease;}
+  #crosshair::after{content:"";position:absolute;left:50%;top:50%;width:3px;height:3px;margin:-1.5px 0 0 -1.5px;border-radius:50%;
+    background:rgba(215,211,196,.9);box-shadow:0 0 4px #000;}
+  #crosshair span{position:absolute;background:rgba(215,211,196,.85);box-shadow:0 0 4px #000,0 0 6px rgba(155,255,60,.25);border-radius:1px;}
   #crosshair .v{left:50%;width:2px;height:8px;margin-left:-1px;} #crosshair .v.t{top:0;} #crosshair .v.b{bottom:0;}
   #crosshair .h{top:50%;height:2px;width:8px;margin-top:-1px;} #crosshair .h.l{left:0;} #crosshair .h.r{right:0;}
-  #crosshair.hit span{background:var(--blood);}
+  #crosshair.hit span{background:var(--blood);box-shadow:0 0 6px rgba(226,38,28,.8);}
+  #crosshair.hit{transform:translate(-50%,-50%) scale(1.18);}
 
-  .hud-tl{position:absolute;top:18px;left:68px;}
-  .hud-tr{position:absolute;top:150px;right:18px;text-align:right;}
-  .hud-bl{position:absolute;bottom:20px;left:20px;}
-  .hud-br{position:absolute;bottom:20px;right:22px;text-align:right;}
+  .hud-tl{position:absolute;top:18px;left:68px;background:linear-gradient(135deg,var(--glass),rgba(10,14,8,.15));
+    border-left:3px solid var(--tox);padding:8px 16px 8px 12px;clip-path:polygon(0 0,100% 0,calc(100% - 12px) 100%,0 100%);}
+  .hud-tr{position:absolute;top:150px;right:18px;text-align:right;background:linear-gradient(225deg,var(--glass),rgba(10,14,8,.15));
+    border-right:3px solid var(--tox);padding:8px 12px 8px 16px;clip-path:polygon(12px 0,100% 0,100% 100%,0 100%);}
+  .hud-bl{position:absolute;bottom:20px;left:20px;background:linear-gradient(135deg,var(--glass),rgba(10,14,8,.12));
+    padding:10px 16px 10px 12px;border-left:3px solid var(--blood);clip-path:polygon(0 0,calc(100% - 12px) 0,100% 100%,0 100%);}
+  .hud-br{position:absolute;bottom:20px;right:22px;text-align:right;background:linear-gradient(225deg,var(--glass),rgba(10,14,8,.12));
+    padding:10px 12px 10px 16px;border-right:3px solid var(--tox);clip-path:polygon(0 0,100% 0,100% 100%,12px 100%);}
 
   .wavebadge{font-family:'Black Ops One',sans-serif;font-size:30px;letter-spacing:1px;color:var(--bone);text-shadow:0 2px 8px #000;}
   .wavebadge small{display:block;font-family:'Rajdhani';font-size:12px;letter-spacing:5px;color:var(--tox);}
@@ -78,13 +110,15 @@
   .hplabel{font-size:12px;letter-spacing:4px;color:#8f9682;display:flex;justify-content:space-between;}
   .hplabel b{color:var(--blood);font-family:'Black Ops One';font-size:14px;}
   .hpbar{margin-top:5px;height:14px;background:#0c0f08;border:1px solid #2c3322;position:relative;overflow:hidden;clip-path:polygon(0 0,100% 0,100% 100%,6px 100%);}
-  .hpfill{position:absolute;inset:0;width:100%;transform-origin:left;background:linear-gradient(90deg,var(--blood-deep),var(--blood));transition:transform .15s ease;}
-  .hpfill.ok{background:linear-gradient(90deg,#2a6b0f,var(--tox));}
+  .hpbar::after{content:"";position:absolute;inset:0 0 50% 0;background:linear-gradient(180deg,rgba(255,255,255,.22),transparent);pointer-events:none;}
+  .hpfill{position:absolute;inset:0;width:100%;transform-origin:left;background:linear-gradient(90deg,var(--blood-deep),var(--blood));transition:transform .25s cubic-bezier(.2,.8,.3,1);box-shadow:0 0 10px rgba(226,38,28,.45);}
+  .hpfill.ok{background:linear-gradient(90deg,#2a6b0f,var(--tox));box-shadow:0 0 10px rgba(155,255,60,.35);}
 
   .weapon{display:flex;align-items:flex-end;gap:12px;justify-content:flex-end;}
   .ammo{font-family:'Black Ops One',sans-serif;font-size:40px;line-height:.9;color:var(--bone);text-shadow:0 2px 8px #000;}
   .ammo small{font-size:18px;color:#8f9682;}
-  .ammo.low{color:var(--blood);}
+  .ammo.low{color:var(--blood);animation:ammoPulse .9s ease-in-out infinite;}
+  @keyframes ammoPulse{0%,100%{text-shadow:0 2px 8px #000;}50%{text-shadow:0 0 18px rgba(226,38,28,.85),0 2px 8px #000;}}
   .wname{font-size:14px;letter-spacing:3px;color:var(--tox);text-transform:uppercase;margin-bottom:6px;}
   .reloading{color:var(--tox);font-size:13px;letter-spacing:3px;animation:blink .6s steps(2) infinite;}
   @keyframes blink{50%{opacity:.2;}}
@@ -100,9 +134,10 @@
   @keyframes pop{0%{opacity:0;transform:scale(.6);}15%{opacity:1;transform:scale(1);}75%{opacity:1;}100%{opacity:0;transform:scale(1.05);}}
 
   #killfeed{position:absolute;top:84px;left:18px;z-index:11;display:flex;flex-direction:column;gap:6px;align-items:flex-start;}
-  .kf{font-size:14px;letter-spacing:1px;background:rgba(8,10,6,.6);border-left:3px solid var(--blood);padding:3px 10px;color:#cfd3c4;animation:kfin .3s ease;}
+  .kf{font-size:14px;letter-spacing:1px;background:linear-gradient(90deg,rgba(8,10,6,.72),rgba(8,10,6,.25));border-left:3px solid var(--blood);
+    padding:3px 14px 3px 10px;color:#cfd3c4;animation:kfin .3s cubic-bezier(.2,.9,.3,1);clip-path:polygon(0 0,100% 0,calc(100% - 8px) 100%,0 100%);}
   .kf.head{border-left-color:var(--tox);} .kf b{color:var(--tox);}
-  @keyframes kfin{from{opacity:0;transform:translateX(-20px);}to{opacity:1;}}
+  @keyframes kfin{from{opacity:0;transform:translateX(-24px);}to{opacity:1;}}
 
   #hitmark{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:11;pointer-events:none;opacity:0;font-family:'Black Ops One';color:#fff;font-size:18px;}
   /* objective banner */
@@ -111,7 +146,7 @@
   .obj-row{display:flex;align-items:center;justify-content:center;gap:7px;font-family:'Rajdhani';font-weight:700;letter-spacing:.5px;font-size:14px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.7);}
   .obj-row span:first-child{font-size:16px;}
   .obj-bar{margin-top:4px;height:7px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.25);border-radius:6px;overflow:hidden;}
-  .obj-bar i{display:block;height:100%;width:0%;background:#9bff3c;transition:width .15s linear;}
+  .obj-bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#6fcf1e,#9bff3c);box-shadow:0 0 8px rgba(155,255,60,.6);transition:width .15s linear;}
   /* floating damage numbers */
   #dmgNumbers{position:fixed;inset:0;z-index:11;pointer-events:none;overflow:hidden;}
   .dmgnum{position:absolute;transform:translate(-50%,-50%);font-family:'Black Ops One';font-size:18px;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.7);animation:dmgFloat .8s ease-out forwards;will-change:transform,opacity;}
@@ -136,18 +171,24 @@
 
   /* minimap */
   #minimap{position:absolute;top:14px;right:14px;z-index:10;width:128px;height:128px;
-    border:1px solid #2c3322;background:rgba(6,8,5,.55);border-radius:50%;overflow:hidden;}
+    border:2px solid rgba(155,255,60,.28);background:rgba(6,8,5,.55);border-radius:50%;overflow:hidden;
+    box-shadow:0 0 0 3px rgba(6,8,5,.6), 0 0 18px rgba(0,0,0,.5), inset 0 0 26px rgba(0,0,0,.65);}
+  #minimap::after{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle at 50% 30%, rgba(155,255,60,.06), transparent 60%);}
   #minimap canvas{position:absolute;inset:0;}
 
   /* ---------- mobile controls ---------- */
   #touch{position:absolute;inset:0;z-index:12;pointer-events:none;display:none;--bs:1;}
   #touch.on{display:block;}
   #stick{position:absolute;left:22px;bottom:22px;width:130px;height:130px;border-radius:50%;transform:scale(var(--bs));transform-origin:left bottom;
-    background:rgba(255,255,255,.05);border:1px solid rgba(155,255,60,.25);pointer-events:auto;}
+    background:radial-gradient(circle,rgba(255,255,255,.02) 40%,rgba(155,255,60,.07));border:1px solid rgba(155,255,60,.3);pointer-events:auto;
+    box-shadow:inset 0 0 22px rgba(0,0,0,.4);}
   #nub{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;
-    background:rgba(155,255,60,.35);border:1px solid var(--tox);}
+    background:radial-gradient(circle at 35% 30%,rgba(200,255,140,.55),rgba(155,255,60,.3));border:1px solid var(--tox);
+    box-shadow:0 2px 10px rgba(0,0,0,.45), 0 0 12px rgba(155,255,60,.25);}
   .tbtn{position:absolute;pointer-events:auto;border-radius:50%;display:flex;align-items:center;justify-content:center;transform:scale(var(--bs));transform-origin:right bottom;
-    font-family:'Black Ops One';color:#fff;background:rgba(226,38,28,.25);border:2px solid rgba(226,38,28,.7);}
+    font-family:'Black Ops One';color:#fff;background:rgba(226,38,28,.25);border:2px solid rgba(226,38,28,.7);
+    box-shadow:inset 0 2px 8px rgba(255,255,255,.12), 0 4px 12px rgba(0,0,0,.35);text-shadow:0 1px 3px rgba(0,0,0,.6);}
   #b-fire{right:26px;bottom:30px;width:104px;height:104px;font-size:13px;letter-spacing:1px;}
   #b-reload{right:140px;bottom:42px;width:64px;height:64px;font-size:11px;background:rgba(155,255,60,.15);border-color:rgba(155,255,60,.6);color:var(--tox);}
   #b-swap{right:150px;bottom:120px;width:54px;height:54px;font-size:11px;background:rgba(255,255,255,.08);border-color:rgba(215,211,196,.5);color:#fff;}
@@ -162,7 +203,9 @@
 
   /* shop */
   .shopgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:min(560px,92vw);margin-top:26px;}
-  .shopcard{background:linear-gradient(160deg,#141810,#0c0f08);border:1px solid #2c3322;padding:16px;text-align:left;position:relative;clip-path:polygon(0 0,100% 0,100% 100%,12px 100%);}
+  .shopcard{background:linear-gradient(160deg,#141810,#0c0f08);border:1px solid #2c3322;padding:16px;text-align:left;position:relative;clip-path:polygon(0 0,100% 0,100% 100%,12px 100%);
+    transition:border-color .15s ease, transform .12s ease, box-shadow .2s ease;}
+  .shopcard:hover{border-color:var(--tox-dim);transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.45), 0 0 16px rgba(155,255,60,.08);}
   .shopcard h3{font-family:'Black Ops One';font-size:16px;color:var(--bone);letter-spacing:1px;}
   .shopcard p{font-size:13px;color:#8f9682;margin:6px 0 12px;line-height:1.4;min-height:36px;}
   .shopcard .cost{position:absolute;top:14px;right:14px;font-family:'Black Ops One';color:var(--tox);font-size:14px;}
@@ -198,8 +241,8 @@
   .lobby-actions{display:flex;gap:12px;justify-content:center;margin-top:6px;}
 
   /* equipment HUD + button */
-  #equipHud{position:absolute;bottom:72px;left:20px;font-size:13px;letter-spacing:2px;color:#9aa18c;text-shadow:0 1px 3px #000;}
-  #abilityHud{position:absolute;bottom:94px;left:20px;font-size:13px;letter-spacing:2px;color:#9aa18c;text-shadow:0 1px 3px #000;}
+  #equipHud{position:absolute;bottom:86px;left:20px;font-size:13px;letter-spacing:2px;color:#9aa18c;text-shadow:0 1px 3px #000;}
+  #abilityHud{position:absolute;bottom:108px;left:20px;font-size:13px;letter-spacing:2px;color:#9aa18c;text-shadow:0 1px 3px #000;}
   #abilityHud b{color:#ffd23c;}
   #standPrompt{position:absolute;left:50%;top:62%;transform:translateX(-50%);font-family:'Black Ops One';font-size:16px;letter-spacing:1px;color:#fff;background:rgba(8,12,8,.66);border:2px solid var(--tox);border-radius:12px;padding:8px 16px;text-shadow:0 1px 3px #000;white-space:nowrap;}
   #breakBanner{position:absolute;left:50%;top:74px;transform:translateX(-50%);font-family:'Black Ops One';font-size:15px;letter-spacing:1px;color:#cfe9ff;background:rgba(8,16,24,.6);border:1px solid rgba(120,180,255,.5);border-radius:12px;padding:7px 18px;text-align:center;text-shadow:0 1px 3px #000;pointer-events:auto;cursor:pointer;}
@@ -215,13 +258,14 @@
 
   /* ---------- arcade hub ---------- */
   .hub{position:absolute;inset:0;z-index:30;font-family:'Fredoka',sans-serif;overflow:hidden;
-    background:#0c0f15;}
+    background:radial-gradient(120% 90% at 50% 0%,#16203a 0%,#0c0f15 60%,#080a10 100%);}
   .hub::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
     background:linear-gradient(180deg, rgba(6,8,12,.72) 0%, rgba(6,8,12,0) 22%, rgba(6,8,12,0) 60%, rgba(6,8,12,.78) 100%);}
   .hub.hidden{display:none;}
 
   .hb-top{position:absolute;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;z-index:5;
-    padding:0 12px;background:linear-gradient(180deg,#1f6fc0,#185fa6);box-shadow:0 3px 0 rgba(0,0,0,.18);z-index:5;}
+    padding:0 12px;background:linear-gradient(180deg,#2178cd,#185fa6);box-shadow:0 3px 0 rgba(0,0,0,.18), 0 6px 18px rgba(0,0,0,.25);
+    border-bottom:1px solid rgba(255,255,255,.14);z-index:5;}
   .hb-profile{display:flex;align-items:center;gap:8px;background:#15528f;border:2px solid #3d86d6;border-radius:30px;padding:3px 8px 3px 3px;}
   .hb-ava{width:36px;height:36px;border-radius:50%;background:#bfe0ff;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid #fff;}
   .hb-pinfo{min-width:104px;}
@@ -241,7 +285,17 @@
   .hb-right{position:absolute;right:10px;top:66px;display:flex;flex-direction:column;gap:9px;z-index:4;align-items:flex-end;}
   .hb-tile{width:70px;height:70px;border-radius:16px;border:none;cursor:pointer;position:relative;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:'Fredoka';
-    background:linear-gradient(180deg,#3aa0ff,#2b7fe0);box-shadow:0 5px 0 #1a5aa8, inset 0 2px 0 rgba(255,255,255,.35);transition:transform .07s;}
+    background:linear-gradient(180deg,#3aa0ff,#2b7fe0);box-shadow:0 5px 0 #1a5aa8, inset 0 2px 0 rgba(255,255,255,.35);
+    transition:transform .09s ease, filter .15s ease;}
+  @media (hover:hover){
+    .hb-tile:hover{transform:translateY(-2px) scale(1.04);filter:brightness(1.1);}
+    .hb-banner:hover{transform:translateY(-2px);filter:brightness(1.08);}
+    .mode:hover:not(.sel){background:rgba(255,255,255,.12);}
+    .hb-play:hover{filter:brightness(1.07);}
+    .bq-card:hover{transform:translateY(-3px);border-color:#6a67c0;}
+    .bq-buy:hover:not(.locked){filter:brightness(1.1);}
+    .hb-gear:hover{filter:brightness(1.12);}
+  }
   .hb-tile:active{transform:translateY(3px);box-shadow:0 2px 0 #1a5aa8, inset 0 2px 0 rgba(255,255,255,.35);}
   .hb-tile .ic{font-size:26px;line-height:1;}
   .hb-tile .tl{font-size:9.5px;font-weight:600;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.25);}
@@ -293,10 +347,16 @@
   .mode .m-ic{font-size:11px;}
   .mode.sel{background:linear-gradient(180deg,#ffd23c,#f5a623);color:#5a3a06;box-shadow:0 4px 0 #c97e10;}
   .mode:active{transform:translateY(2px);}
-  .hb-play{flex:0 0 auto;font-family:'Fredoka';font-weight:700;font-size:30px;color:#fff;border:none;cursor:pointer;
+  .hb-play{flex:0 0 auto;font-family:'Fredoka';font-weight:700;font-size:30px;color:#fff;border:none;cursor:pointer;position:relative;overflow:hidden;
     padding:14px 44px;border-radius:18px;background:linear-gradient(180deg,#ffc83c,#f59a18);letter-spacing:1px;
-    box-shadow:0 7px 0 #c2700e, inset 0 3px 0 rgba(255,255,255,.4);text-shadow:0 2px 0 rgba(0,0,0,.25);}
-  .hb-play:active{transform:translateY(4px);box-shadow:0 3px 0 #c2700e, inset 0 3px 0 rgba(255,255,255,.4);}
+    box-shadow:0 7px 0 #c2700e, inset 0 3px 0 rgba(255,255,255,.4);text-shadow:0 2px 0 rgba(0,0,0,.25);
+    animation:playPulse 2.4s ease-in-out infinite;transition:filter .15s ease;}
+  @keyframes playPulse{0%,100%{box-shadow:0 7px 0 #c2700e, inset 0 3px 0 rgba(255,255,255,.4);}
+    50%{box-shadow:0 7px 0 #c2700e, inset 0 3px 0 rgba(255,255,255,.4), 0 0 26px rgba(255,200,60,.55);}}
+  .hb-play::after{content:"";position:absolute;top:0;bottom:0;left:-80%;width:45%;pointer-events:none;
+    background:linear-gradient(105deg,transparent,rgba(255,255,255,.45),transparent);transform:skewX(-20deg);animation:playShine 3.2s ease-in-out infinite;}
+  @keyframes playShine{0%,55%{left:-80%;}85%,100%{left:140%;}}
+  .hb-play:active{transform:translateY(4px);box-shadow:0 3px 0 #c2700e, inset 0 3px 0 rgba(255,255,255,.4);animation:none;}
   .hb-play.sm{font-size:19px;padding:12px 28px;width:100%;margin-top:12px;}
 
   .hub-msg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:20;
@@ -304,10 +364,12 @@
   .hub-msg.hidden{display:none;}
 
   /* loadout panel */
-  .lo-panel{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(6,16,28,.74);padding:16px;}
+  .lo-panel{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(4,10,18,.66);padding:16px;
+    backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);animation:ovIn .22s ease both;}
   .lo-panel.hidden{display:none;}
   .lo-card{width:min(1000px,96vw);max-height:92vh;display:flex;flex-direction:column;
-    background:linear-gradient(180deg,#10160b,#0a0d07);border:2px solid #2c3322;border-radius:18px;padding:16px;box-shadow:0 16px 40px rgba(0,0,0,.6);}
+    background:linear-gradient(180deg,#10160b,#0a0d07);border:2px solid #2c3322;border-radius:18px;padding:16px;
+    box-shadow:0 16px 48px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.05);animation:cardIn .3s cubic-bezier(.2,.9,.3,1.2) both;}
   .lo-head{font-family:'Black Ops One';color:var(--bone);font-size:20px;letter-spacing:1px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
   .lo-x{width:34px;height:34px;border-radius:10px;border:none;background:#2a3120;color:#fff;font-size:16px;cursor:pointer;}
   .lo-x:active{transform:translateY(2px);}
@@ -395,8 +457,11 @@
     font-family:monospace;font-size:11px;padding:8px;resize:vertical;box-sizing:border-box;word-break:break-all;}
   #b-pause{position:absolute;top:14px;left:14px;z-index:13;width:44px;height:44px;border-radius:12px;pointer-events:auto;
     display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;cursor:pointer;
-    background:rgba(8,12,8,.55);border:1px solid rgba(255,255,255,.28);}
+    background:rgba(8,12,8,.55);border:1px solid rgba(255,255,255,.28);transition:border-color .15s ease, background .15s ease;}
+  #b-pause:hover{border-color:rgba(155,255,60,.6);background:rgba(12,18,10,.7);}
   #b-pause:active{filter:brightness(1.4);}
+  #over .title{animation:overPulse 1.8s ease-in-out infinite, ovRise .45s cubic-bezier(.2,.9,.3,1) both;}
+  @keyframes overPulse{0%,100%{text-shadow:0 0 18px rgba(226,38,28,.35), 0 6px 0 #000;}50%{text-shadow:0 0 38px rgba(226,38,28,.8), 0 6px 0 #000;}}
   #lowhp{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:0;box-shadow:inset 0 0 140px 55px rgba(226,38,28,.6);}
   #lowhp.on{animation:lowpulse 1.05s ease-in-out infinite;}
   @keyframes lowpulse{0%,100%{opacity:0;}50%{opacity:.72;}}
@@ -451,7 +516,8 @@
   .bq-tab{font-family:'Fredoka';font-weight:600;font-size:14px;color:#cdd0ff;border:none;cursor:pointer;background:rgba(255,255,255,.08);border-radius:12px 12px 0 0;padding:9px 18px;}
   .bq-tab.sel{background:rgba(255,255,255,.16);color:#fff;}
   .bq-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(186px,1fr));gap:12px;padding:14px;align-content:start;position:relative;z-index:2;}
-  .bq-card{background:linear-gradient(180deg,#36356a,#262550);border:1px solid #4a4890;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:5px;box-shadow:0 5px 0 rgba(0,0,0,.25);}
+  .bq-card{background:linear-gradient(180deg,#36356a,#262550);border:1px solid #4a4890;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:5px;box-shadow:0 5px 0 rgba(0,0,0,.25);
+    transition:transform .12s ease, border-color .15s ease;}
   .bq-card .bc-ic{font-size:30px;line-height:1;}
   .bq-card h5{font-family:'Fredoka';font-weight:700;font-size:15px;color:#fff;}
   .bq-card p{font-size:12px;color:#b9bcf0;line-height:1.4;min-height:32px;}
