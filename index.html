@@ -1340,6 +1340,11 @@ const Audio = (()=>{
       o.connect(g); g.connect(sfxG); o.start(tt); o.stop(tt+0.22); };
     thump(t,0.5); thump(t+0.18,0.32);
   }
+  function kill(head){
+    if(!ctx) return;
+    click(head?1180:540,0.05,head?0.2:0.14);
+    if(head) setTimeout(()=>click(1560,0.07,0.16),45);
+  }
   function step(fast){
     if(!ctx) return;
     const t=ctx.currentTime;
@@ -1348,7 +1353,7 @@ const Audio = (()=>{
     g.gain.setValueAtTime(fast?0.09:0.06,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.05);
     s.connect(f); f.connect(g); g.connect(sfxG); s.start(t);
   }
-  return {init,resume,shot,reload,empty,groan,hurt,buy,denied,click,boom,stinger,heartbeat,step,setVolume,setSfx,setMusic,setAmb,startMusic,stopMusic,musicOn,startCombat,stopCombat,setCombatIntensity,startAmbience,stopAmbience};
+  return {init,resume,shot,reload,empty,groan,hurt,buy,denied,click,boom,stinger,heartbeat,step,kill,setVolume,setSfx,setMusic,setAmb,startMusic,stopMusic,musicOn,startCombat,stopCombat,setCombatIntensity,startAmbience,stopAmbience};
 })();
 
 // ---------------- Weapons config ----------------
@@ -1586,6 +1591,7 @@ const Game = {
   curWeapon:'pistol', lastShot:0, reloading:false, reloadEnd:0,
   weaponMesh:null, muzzle:null, recoilKick:0, sway:new THREE.Vector2(),
   ads:false, adsT:0, combo:0, comboUntil:0,
+  tracers:[], tracerPool:[],
   shake:0, drops:[], decals:[], pu:{doublePoints:0,instaKill:0},
   particlePool:[], zombiePool:{walker:[],runner:[],brute:[],spitter:[],bomber:[],screamer:[],armored:[]},
   runWeapon:{dmg:0,mag:0,sight:0}, ability:{id:null,cd:0,cdLeft:0,dur:0,activeUntil:0},
@@ -2327,6 +2333,8 @@ function buildWeaponMesh(){
     new THREE.MeshBasicMaterial({color:0xffe08a,transparent:true,opacity:0}));
   mz.position.set(0,mzv[0]*V,mzv[1]*V); inner.add(mz);
   Game.muzzle=mz;
+  const flSprite=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture(),color:0xffd9a0,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false}));
+  flSprite.scale.set(0.34,0.34,1); flSprite.position.copy(mz.position); inner.add(flSprite); Game.muzzleFlash=flSprite;
   const mzLight=new THREE.PointLight(0xffd070,0,6); mzLight.position.copy(mz.position); inner.add(mzLight); Game.muzzleLight=mzLight;
 
   // ---- first-person arms holding the weapon ----
@@ -2565,6 +2573,29 @@ function fireFx(w){
   const vel=right.clone().multiplyScalar(rand(1.6,2.6)); vel.y+=rand(1.4,2.2); vel.addScaledVector(fwd,rand(-0.3,0.3));
   Game.shells.push({mesh:m,vel,life:1.4,spin:new THREE.Vector3(rand(-14,14),rand(-14,14),rand(-14,14))});
 }
+// glowing bullet tracers (pooled)
+let TRGEO=null;
+function spawnTracer(from,to){
+  if(Game.settings.quality==='low' && Math.random()<0.6) return;
+  if(!TRGEO){ TRGEO=new THREE.CylinderGeometry(0.009,0.009,1,4,1,true); TRGEO.rotateX(Math.PI/2); }
+  let t=Game.tracerPool.pop();
+  if(!t){
+    const m=new THREE.Mesh(TRGEO,new THREE.MeshBasicMaterial({color:0xffd27a,transparent:true,opacity:0.85,blending:THREE.AdditiveBlending,depthWrite:false}));
+    m.frustumCulled=false; Game.scene.add(m); t={mesh:m};
+  } else t.mesh.visible=true;
+  const len=Math.max(0.5,from.distanceTo(to));
+  t.mesh.position.copy(from).lerp(to,0.5);
+  t.mesh.lookAt(to);
+  t.mesh.scale.set(1,1,len);
+  t.life=t.max=0.07;
+  Game.tracers.push(t);
+}
+function updateTracers(dt){
+  for(let i=Game.tracers.length-1;i>=0;i--){ const t=Game.tracers[i]; t.life-=dt;
+    if(t.life<=0){ t.mesh.visible=false; Game.tracers.splice(i,1); Game.tracerPool.push(t); continue; }
+    t.mesh.material.opacity=0.85*(t.life/t.max);
+  }
+}
 function updateShells(dt){
   for(let i=Game.shells.length-1;i>=0;i--){ const s=Game.shells[i]; s.life-=dt;
     if(s.life<=0){ Game.scene.remove(s.mesh); Game.shells.splice(i,1); continue; }
@@ -2663,11 +2694,40 @@ function spawnDecal(pos){
   Game.decalMesh.instanceMatrix.needsUpdate=true;
   Game.decalIdx=(Game.decalIdx+1)%DECAL_N;
 }
+// blood pools under killed zombies (second instanced ring buffer)
+const POOL_N=24;
+function ensureBloodPoolMesh(){
+  if(Game.poolMesh) return;
+  ensureDecalMesh();
+  const geo=new THREE.CircleGeometry(1,12);
+  const mat=new THREE.MeshBasicMaterial({color:0x4a0805,transparent:true,opacity:0.72,depthWrite:false});
+  const im=new THREE.InstancedMesh(geo,mat,POOL_N);
+  im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.frustumCulled=false; im.renderOrder=1;
+  for(let i=0;i<POOL_N;i++) im.setMatrixAt(i,_decalDummy.matrix);
+  im.instanceMatrix.needsUpdate=true;
+  Game.scene.add(im); Game.poolMesh=im; Game.poolIdx=0;
+}
+function spawnBloodPool(pos){
+  if(Game.settings.quality==='low') return;
+  ensureBloodPoolMesh();
+  const d=_decalDummy;
+  d.position.set(pos.x+rand(-0.15,0.15),0.028,pos.z+rand(-0.15,0.15));
+  d.rotation.set(-Math.PI/2,0,Math.random()*6.28);
+  d.scale.set(rand(0.5,0.85),rand(0.4,0.7),1);
+  d.updateMatrix();
+  Game.poolMesh.setMatrixAt(Game.poolIdx,d.matrix);
+  Game.poolMesh.instanceMatrix.needsUpdate=true;
+  Game.poolIdx=(Game.poolIdx+1)%POOL_N;
+}
 function clearDecals(){
   if(!Game.decalMesh) return;
   _decalDummy.scale.setScalar(0); _decalDummy.position.set(0,0,0); _decalDummy.updateMatrix();
   for(let i=0;i<DECAL_N;i++) Game.decalMesh.setMatrixAt(i,_decalDummy.matrix);
   Game.decalMesh.instanceMatrix.needsUpdate=true; Game.decalIdx=0;
+  if(Game.poolMesh){
+    for(let i=0;i<POOL_N;i++) Game.poolMesh.setMatrixAt(i,_decalDummy.matrix);
+    Game.poolMesh.instanceMatrix.needsUpdate=true; Game.poolIdx=0;
+  }
 }
 function updateDecals(dt){ /* instanced ring buffer — persistent, no per-frame work */ }
 function bulletImpact(origin,dir,range){
@@ -3135,12 +3195,19 @@ function tryShoot(){
   addShake(0.05 + w.recoil*0.5 + (w.sound==='shotgun'?0.1:0));
   vibrate(w.sound==='shotgun'?22:10);
   Game.player.pitch=clamp(Game.player.pitch+w.recoil,-1.2,1.2);
-  // muzzle flash
+  // muzzle flash (core sphere + rotated star sprite)
   Game.muzzle.material.opacity=1;
+  if(Game.muzzleFlash){
+    Game.muzzleFlash.material.opacity=0.95;
+    Game.muzzleFlash.material.rotation=Math.random()*6.28;
+    const fs=(w.sound==='shotgun'?0.5:0.34)*rand(0.85,1.2);
+    Game.muzzleFlash.scale.set(fs,fs,1);
+  }
   if(!Game.lowLights){ Game.muzzleLight.intensity=2.5;
-    setTimeout(()=>{ if(Game.muzzle){Game.muzzle.material.opacity=0;Game.muzzleLight.intensity=0;} },50); }
-  else setTimeout(()=>{ if(Game.muzzle){Game.muzzle.material.opacity=0;} },50);
+    setTimeout(()=>{ if(Game.muzzle){Game.muzzle.material.opacity=0;Game.muzzleLight.intensity=0;} if(Game.muzzleFlash)Game.muzzleFlash.material.opacity=0; },50); }
+  else setTimeout(()=>{ if(Game.muzzle){Game.muzzle.material.opacity=0;} if(Game.muzzleFlash)Game.muzzleFlash.material.opacity=0; },50);
   fireFx(w);
+  const mzWorld=Game.muzzle.getWorldPosition(new THREE.Vector3());
 
   const ray=new THREE.Raycaster();
   const insta=Game.pu.instaKill>performance.now();
@@ -3157,8 +3224,10 @@ function tryShoot(){
     ray.set(origin,dir);
     ray.far=w.range;
     const hits=ray.intersectObjects(Game.hitMeshes,false);
+    let end=null;
     if(hits.length){
       const h=hits[0]; const z=h.object.userData.zombie;
+      end=h.point;
       if(z && !z.dead){
         const head=h.object.userData.part==='head';
         let dmg=(head? w.dmg*2.6 : w.dmg)*dmgScale;
@@ -3172,7 +3241,11 @@ function tryShoot(){
       }
     } else {
       bulletImpact(origin,dir,w.range);
+      let tEnd=Math.min(w.range,60);
+      if(dir.y<-0.02){ const tg=(0.02-origin.y)/dir.y; if(tg>0) tEnd=Math.min(tEnd,tg); }
+      end=origin.clone().addScaledVector(dir,tEnd);
     }
+    spawnTracer(mzWorld,end);
   }
   if(anyHit) showHitmark(anyHead);
   updateAmmoUI();
@@ -3221,6 +3294,8 @@ function killZombie(z,head,noScore){
     if(head) Game.headshots++;
   }
   burst(z.mesh.position.clone().setY(1.0),0x8a0f0a,18,3,0.7);
+  spawnBloodPool(z.mesh.position);
+  if(!noScore){ try{Audio.kill(head);}catch(e){} Game._killFlash=performance.now(); }
   addKill(z.boss?'boss':z.type,head);
   maybeDropPowerup(z);
   if(z.boss) bossDefeated(z);
@@ -3242,7 +3317,7 @@ function reloadWeapon(){
   const w=Game.curWeapon;
   if(Game.ammo[w]>=magOf(w)) return;
   if(Game.reserve[w]<=0) return;
-  Game.reloading=true; Game.reloadEnd=performance.now()+WEAPONS[w].reload*Game.reloadMul;
+  Game.reloading=true; Game.reloadDur=WEAPONS[w].reload*Game.reloadMul; Game.reloadEnd=performance.now()+Game.reloadDur;
   Audio.reload();
   $('reloadMsg').classList.remove('hidden');
 }
@@ -3256,6 +3331,7 @@ function finishReload(){
 function switchWeapon(name){
   if(!Game.owned[name]||name===Game.curWeapon||Game.state!=='playing') return;
   Game.curWeapon=name; Game.reloading=false; $('reloadMsg').classList.add('hidden');
+  Game.swapT=performance.now();
   buildWeaponMesh(); Audio.click(400,0.05,0.1);
   $('wName').textContent=WEAPONS[name].name; updateAmmoUI();
 }
@@ -3438,8 +3514,12 @@ function addKill(type,head){
 }
 let hitTimer=0;
 function showHitmark(head){
-  const hm=$('hitmark'); hm.style.color=head?'#9bff3c':'#fff'; hm.style.opacity='1'; hm.style.transform='translate(-50%,-50%) scale('+(head?1.4:1)+')';
-  hitTimer=0.12;
+  const hm=$('hitmark');
+  const kill=Game._killFlash && performance.now()-Game._killFlash<60;
+  hm.style.color=kill?'#ff3b2e':(head?'#9bff3c':'#fff');
+  hm.style.opacity='1';
+  hm.style.transform='translate(-50%,-50%) scale('+(kill?1.7:(head?1.4:1))+')';
+  hitTimer=kill?0.18:0.12;
   $('crosshair').classList.add('hit'); setTimeout(()=>$('crosshair').classList.remove('hit'),90);
 }
 function flashDamage(){ const d=$('dmg'); d.style.opacity='1'; setTimeout(()=>d.style.opacity='0',120); }
@@ -3500,12 +3580,13 @@ function updatePlayer(dt){
   p.bob += dt*(sprint?14:10)*(moving?1:0);
   const bobY=moving?Math.sin(p.bob)*0.04:0;
   p.pos.y=lerp(p.pos.y,1.6+bobY,0.3);
-  if(moving){ const stepI=Math.floor(p.bob/Math.PI); if(stepI!==p._step){ p._step=stepI; try{Audio.step(sprint);}catch(e){} } }
+  if(moving){ const stepI=Math.floor(p.bob/Math.PI); if(stepI!==p._step){ p._step=stepI; try{Audio.step(sprint);}catch(e){}
+    if(sprint && Game.settings.quality!=='low') burst(new THREE.Vector3(p.pos.x,0.12,p.pos.z),0x9a8a6a,2,0.7,0.3); } }
   // aim-down-sights blend + dynamic FOV (sprint kick / ADS zoom / sniper FOCUS)
   Game.adsT=lerp(Game.adsT,(Game.ads&&!isTouch)?1:0,Math.min(1,dt*12));
   const focusOn=Game.ability&&Game.ability.id==='focus'&&Game.ability.activeUntil>performance.now();
   const baseF=(Game.settings.fov||72)*(focusOn?0.6:1);
-  const targetF=Math.max(38, baseF - Game.adsT*16 + ((sprint&&moving)?5*(1-Game.adsT):0));
+  const targetF=Math.max(38, baseF - Game.adsT*16 + ((sprint&&moving)?5*(1-Game.adsT):0) + Game.recoilKick*3);
   if(Math.abs(Game.camera.fov-targetF)>0.05){
     Game.camera.fov=lerp(Game.camera.fov,targetF,Math.min(1,dt*10));
     Game.camera.updateProjectionMatrix();
@@ -3532,11 +3613,15 @@ function updatePlayer(dt){
     Game.sway.x=lerp(Game.sway.x,moving?Math.sin(p.bob)*0.012:0,0.2);
     Game.sway.y=lerp(Game.sway.y,moving?Math.abs(Math.cos(p.bob))*0.012:0,0.2);
     const swayK=1-Game.adsT*0.75;
+    // reload dip + weapon-swap raise animations
+    let rl=0;
+    if(Game.reloading && Game.reloadDur){ const pr=clamp(1-(Game.reloadEnd-performance.now())/Game.reloadDur,0,1); rl=Math.sin(pr*Math.PI); }
+    const sw2=clamp((performance.now()-(Game.swapT||0))/200,0,1), raise=1-sw2;
     Game.weaponMesh.position.set(
       lerp(0.22,0.02,Game.adsT)+Game.sway.x*swayK,
-      lerp(-0.22,-0.165,Game.adsT)-Game.sway.y*swayK - (sprint?0.04*(1-Game.adsT):0),
+      lerp(-0.22,-0.165,Game.adsT)-Game.sway.y*swayK - (sprint?0.04*(1-Game.adsT):0) - rl*0.13 - raise*0.3,
       lerp(-0.35,-0.30,Game.adsT)+Game.recoilKick*0.04);
-    Game.weaponMesh.rotation.set(Game.recoilKick*0.5, sprint?0.4*(1-Game.adsT):0, 0);
+    Game.weaponMesh.rotation.set(Game.recoilKick*0.5 - rl*0.6 - raise*0.7, sprint?0.4*(1-Game.adsT):0, rl*0.28);
   }
   // health regen
   if(performance.now()-p.lastHit>4000 && p.hp<p.maxhp){ p.hp=Math.min(p.maxhp,p.hp+(12+4*(Game.runRegen||0))*dt*Game.regenMul); updateHpUI(); }
@@ -3634,6 +3719,9 @@ function hurtPlayer(dmg,srcPos){
   const p=Game.player;
   dmg*=Game.buff.resist;
   p.hp-=dmg; p.lastHit=performance.now();
+  // aim punch: a bite knocks your view slightly
+  p.pitch=clamp(p.pitch+rand(0.018,0.032),-1.2,1.2);
+  p.yaw+=rand(-0.022,0.022);
   flashDamage(); Audio.hurt(); updateHpUI(); addShake(0.18); vibrate(55);
   // directional damage indicator (arc pointing toward the attacker)
   if(srcPos){
@@ -4499,6 +4587,7 @@ function animate(){
     updateTurrets(dt);
     updateMines(dt);
     updateShells(dt);
+    updateTracers(dt);
     updateRain(dt);
     updateAbility(dt);
     // low-health heartbeat
