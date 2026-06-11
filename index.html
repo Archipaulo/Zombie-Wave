@@ -2029,9 +2029,20 @@ function buildWorld(){
   // ---- low sandbag barricades ----
   [[4,-3,5,1.4],[-5,4,1.4,5],[20,-2,4,1.4],[-2,12,5,1.4]].forEach(s=>solid(s[0],s[1],s[2],s[3],1.05,sandbag));
 
-  // ---- central cover + scattered crates ----
-  solid(0,6,3,3,2.4,concreteD);
-  [[-10,14,2,2,2],[13,-2,2,2,2],[-3,-13,2,2,2],[17,-16,2.4,2.4,2.2],[-22,-12,2,2,2]].forEach(c=>solid(c[0],c[1],c[2],c[3],c[4],wood));
+  // ---- central planter (low cover you can shoot over) + scattered crates ----
+  solid(0,6,3,3,0.85,T(TX.brick,[2,1],{color:0xd8c8b0}));
+  (function(){
+    const soil=new THREE.Mesh(new THREE.PlaneGeometry(2.7,2.7),T(TX.dirt,[1,1],{rough:1,bump:false}));
+    soil.rotation.x=-Math.PI/2; soil.position.set(0,0.86,6); sc.add(soil);
+    deco(0,0.9,6,3.2,0.1,3.2,concreteD);                                   // cap rim
+    // small tree + flowers inside
+    const tr=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.14,1.3,7),T(TX.bark,[1,1],{rough:1})); tr.position.set(0.3,1.55,6.2); tr.castShadow=true; sc.add(tr);
+    const cano=new THREE.Mesh(new THREE.SphereGeometry(0.85,9,8),M(0x4caf3f,{roughness:1})); cano.position.set(0.3,2.45,6.2); cano.scale.y=0.85; cano.castShadow=true; sc.add(cano);
+    const fl=[0xd84a6a,0xe8d23c,0xe8e8e8];
+    for(let i=0;i<8;i++){ const f=new THREE.Mesh(new THREE.SphereGeometry(0.07,6,5),M(fl[i%3],{roughness:.8}));
+      f.position.set(rand(-1.1,1.1),1.0,6+rand(-1.1,1.1)); sc.add(f); }
+  })();
+  [[-10,14,2,2,2],[13,-2,2,2,2],[-1,-14,2,2,2],[17,-16,2.4,2.4,2.2],[-22,-12,2,2,2]].forEach(c=>solid(c[0],c[1],c[2],c[3],c[4],wood));
 
   // ---- wrecked cars ----
   function wreck(x,z,bodyCol,cabCol,flat){
@@ -2178,6 +2189,95 @@ function buildWorld(){
       t2.position.set(dx2+1.5+Math.random()*0.8,0.07,dz2+(Math.random()-0.5)*1.6); t2.rotation.y=Math.random()*3; sc.add(t2); }
   })();
 
+  // ---- plaza decor pack: benches, bus shelter, flag, billboard, graffiti, manholes, litter ----
+  (function(){
+    // park benches around the plaza
+    const benchWood=T(TX.wood,[2,1],{rough:.85,color:0x9a7448}), benchLeg=M(0x23262a,{metalness:.5,roughness:.5});
+    function bench(x,z,rot){
+      const g=new THREE.Group();
+      for(let i=0;i<3;i++){ const sl=new THREE.Mesh(new THREE.BoxGeometry(1.7,0.06,0.14),benchWood); sl.position.set(0,0.46,-0.16+i*0.16); g.add(sl); }
+      for(let i=0;i<2;i++){ const sl=new THREE.Mesh(new THREE.BoxGeometry(1.7,0.14,0.05),benchWood); sl.position.set(0,0.66+i*0.2,-0.26); g.add(sl); }
+      [-0.7,0.7].forEach(lx=>{ const lg=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.46,0.5),benchLeg); lg.position.set(lx,0.23,0); g.add(lg);
+        const bk=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.55,0.06),benchLeg); bk.position.set(lx,0.72,-0.27); bk.rotation.x=-0.12; g.add(bk); });
+      g.position.set(x,0,z); g.rotation.y=rot; g.traverse(o=>{o.castShadow=true;}); sc.add(g);
+      const turned=Math.abs(Math.sin(rot))>0.5, rx=turned?0.4:0.95, rz=turned?0.95:0.4;
+      Game.obstacles.push({min:{x:x-rx,z:z-rz},max:{x:x+rx,z:z+rz}});
+    }
+    bench(0,10.4,Math.PI); bench(-10.2,-3,Math.PI/2); bench(10.2,3,-Math.PI/2);
+
+    // bus shelter (glass + bench)
+    (function(x,z){
+      const g=new THREE.Group();
+      const glass=new THREE.MeshStandardMaterial({color:0xaac8d4,roughness:.15,metalness:.1,transparent:true,opacity:0.32,side:THREE.DoubleSide});
+      const frame=M(0x2c3136,{metalness:.5,roughness:.5});
+      [-1.5,1.5].forEach(px=>{ const p=new THREE.Mesh(new THREE.BoxGeometry(0.1,2.4,0.1),frame); p.position.set(px,1.2,-0.55); g.add(p); });
+      const backG=new THREE.Mesh(new THREE.PlaneGeometry(3.0,1.9),glass); backG.position.set(0,1.25,-0.55); g.add(backG);
+      const roof=new THREE.Mesh(new THREE.BoxGeometry(3.3,0.08,1.5),frame); roof.position.set(0,2.42,-0.05); roof.rotation.x=0.05; g.add(roof);
+      const seat=new THREE.Mesh(new THREE.BoxGeometry(2.6,0.07,0.4),T(TX.wood,[2,1],{rough:.85,color:0x8a6a40})); seat.position.set(0,0.5,-0.3); g.add(seat);
+      [-1.1,1.1].forEach(px=>{ const lp=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.5,0.3),frame); lp.position.set(px,0.25,-0.3); g.add(lp); });
+      // small route sign on the roof
+      const rs=new THREE.Mesh(new THREE.BoxGeometry(1.0,0.34,0.06),new THREE.MeshStandardMaterial({color:0x2b6cff,emissive:0x12244a,emissiveIntensity:.4,roughness:.5})); rs.position.set(0,2.66,-0.05); g.add(rs);
+      g.position.set(x,0,z); g.rotation.y=-Math.PI/2;
+      g.traverse(o=>{o.castShadow=true;}); sc.add(g);
+      Game.obstacles.push({min:{x:x-0.7,z:z-1.6},max:{x:x+0.3,z:z+1.6}});
+    })(12.2,-2);
+
+    // flag pole at the plaza corner (opposite the stop sign)
+    (function(x,z){
+      deco(x,3.6,z,0.1,7.2,0.1,metal);
+      const ball=new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8),M(0xc9a227,{metalness:.8,roughness:.3})); ball.position.set(x,7.25,z); sc.add(ball);
+      const flagTex=_tex(64,(g2,s)=>{ g2.fillStyle='#2f6b2a'; g2.fillRect(0,0,s,s);
+        g2.fillStyle='#9bff3c'; g2.beginPath(); g2.arc(s/2,s/2,s*0.22,0,7); g2.fill();
+        g2.fillStyle='#2f6b2a'; g2.beginPath(); g2.arc(s/2+4,s/2-2,s*0.16,0,7); g2.fill(); });
+      const flag=new THREE.Mesh(new THREE.PlaneGeometry(1.6,1.0),new THREE.MeshStandardMaterial({map:flagTex,roughness:.9,side:THREE.DoubleSide}));
+      flag.position.set(x+0.85,6.6,z); flag.rotation.y=0.25; flag.castShadow=true; sc.add(flag);
+      Game.obstacles.push({min:{x:x-0.2,z:z-0.2},max:{x:x+0.2,z:z+0.2}});
+    })(-9.8,9.8);
+
+    // rooftop billboard on the north-east building
+    (function(){
+      const bb=_tex(256,(g2,s)=>{
+        g2.fillStyle='#1c1410'; g2.fillRect(0,0,s,s);
+        g2.fillStyle='#7a0d09'; g2.fillRect(8,8,s-16,s-16);
+        g2.fillStyle='#e8ddc0'; g2.font='bold 44px sans-serif'; g2.textAlign='center';
+        g2.fillText('RESTEZ',s/2,s*0.38); g2.fillText('EN VIE',s/2,s*0.58);
+        g2.strokeStyle='#e2261c'; g2.lineWidth=5; g2.strokeRect(16,16,s-32,s-32);
+        g2.fillStyle='#ffd23c'; g2.font='bold 22px sans-serif'; g2.fillText('☣ ZONE 7 ☣',s/2,s*0.8);
+        for(let i=0;i<200;i++){ g2.fillStyle='rgba(0,0,0,'+(Math.random()*0.25)+')'; g2.fillRect(Math.random()*s,Math.random()*s,3,3); }
+      });
+      const px=25,pz=-26,py=8;
+      [-2.2,2.2].forEach(ox=>deco(px+ox,py+1.0,pz+1.5,0.12,2.2,0.12,metal));
+      const panel=new THREE.Mesh(new THREE.BoxGeometry(6,3,0.15),new THREE.MeshStandardMaterial({map:bb,roughness:.85}));
+      panel.position.set(px,py+2.6,pz+1.5); panel.castShadow=true; sc.add(panel);
+    })();
+
+    // graffiti on walls + container
+    function graffiti(draw,w,h,x,y,z,ry){
+      const tx=_tex(128,draw);
+      const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:tx,transparent:true,depthWrite:false}));
+      m.position.set(x,y,z); m.rotation.y=ry||0; sc.add(m);
+    }
+    const tagText=(txt,colr)=>((g2,s)=>{ g2.clearRect(0,0,s,s);
+      g2.fillStyle=colr; g2.font='bold 30px sans-serif'; g2.textAlign='center';
+      g2.save(); g2.translate(s/2,s/2); g2.rotate(-0.06); g2.fillText(txt,0,8); g2.restore();
+      g2.globalAlpha=0.55; g2.fillText(txt,s/2+2,s/2+10); g2.globalAlpha=1; });
+    graffiti(tagText('ILS ARRIVENT','rgba(226,38,28,0.85)'),4.4,1.6,-10,2.2,-A+0.85,0);
+    graffiti(tagText('ZONE 7','rgba(155,255,60,0.8)'),3.4,1.4,A-0.85,2.4,8,-Math.PI/2);
+    graffiti((g2,s)=>{ g2.clearRect(0,0,s,s); g2.strokeStyle='rgba(255,210,60,0.9)'; g2.lineWidth=6;
+      g2.beginPath(); g2.arc(s/2,s/2,s*0.3,0,7); g2.stroke();
+      g2.fillStyle='rgba(255,210,60,0.9)'; g2.font='bold 52px sans-serif'; g2.textAlign='center'; g2.fillText('☣',s/2,s/2+18);
+    },1.6,1.6,-9,1.4,-4.66,0);
+
+    // manhole covers + litter on the roads
+    const mh=M(0x2c2e30,{metalness:.4,roughness:.7});
+    [[-8,-8],[3,3],[18,14]].forEach(p=>{ const m=new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.45,0.03,18),mh); m.position.set(p[0],0.025,p[1]); sc.add(m);
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(0.45,0.025,6,18),mh); ring.rotation.x=Math.PI/2; ring.position.set(p[0],0.03,p[1]); sc.add(ring); });
+    const paperMat=new THREE.MeshStandardMaterial({color:0xd8d4c4,roughness:1,side:THREE.DoubleSide});
+    for(let i=0;i<7;i++){ const pp2=new THREE.Mesh(new THREE.PlaneGeometry(0.28,0.38),paperMat);
+      pp2.rotation.set(-Math.PI/2,0,Math.random()*6.28); const a=Math.random()*6.28,r2=4+Math.random()*14;
+      pp2.position.set(Math.cos(a)*r2,0.022,Math.sin(a)*r2); sc.add(pp2); }
+  })();
+
   // ---- extra realism props ----
   const rubbleMat=T(TX.concrete,[1,1],{color:0xb8b8b0});
   function rubble(x,z){ for(let i=0;i<6;i++){ const w=0.5+Math.random()*0.9; const m=new THREE.Mesh(new THREE.BoxGeometry(w,0.3+Math.random()*0.4,w),rubbleMat); m.position.set(x+(Math.random()-0.5)*2.4,0.15+Math.random()*0.2,z+(Math.random()-0.5)*2.4); m.rotation.set(Math.random(),Math.random()*3,Math.random()*0.4); add(m); } }
@@ -2209,15 +2309,51 @@ function buildWorld(){
   Game.stands.length=0;
   STANDS.forEach(def=>{
     const g=new THREE.Group();
+    // striped awning canvas (white + stand colour)
+    const col=new THREE.Color(def.color);
+    const awnTex=_tex(64,(gc,s)=>{ const hexc='rgb('+((col.r*255)|0)+','+((col.g*255)|0)+','+((col.b*255)|0)+')';
+      for(let i=0;i<8;i++){ gc.fillStyle=i%2?'#e8e6da':hexc; gc.fillRect(i*(s/8),0,s/8,s); }
+      for(let i=0;i<300;i++){ gc.fillStyle='rgba(60,55,40,'+(Math.random()*0.12)+')'; gc.fillRect(Math.random()*s,Math.random()*s,2,2); } });
+    awnTex.repeat.set(2,1);
+    // counter with wood top
     const counter=new THREE.Mesh(new THREE.BoxGeometry(2.4,1.1,1.0),T(TX.metal,[1,1],{color:0x2a2f25,metal:.4,rough:.6})); counter.position.y=0.55; g.add(counter);
-    const top=new THREE.Mesh(new THREE.BoxGeometry(2.7,0.12,1.3),M(0x3a4030)); top.position.y=1.15; g.add(top);
-    // posts + canopy
-    [-1.15,1.15].forEach(sx=>{ const p=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,2.4,8),M(0x20241b)); p.position.set(sx,1.7,-0.5); g.add(p); });
-    const canopy=new THREE.Mesh(new THREE.BoxGeometry(2.9,0.12,1.5),new THREE.MeshStandardMaterial({color:def.color,roughness:.5,emissive:def.color,emissiveIntensity:0.25})); canopy.position.set(0,2.9,-0.1); g.add(canopy);
-    // glowing sign
-    const sign=new THREE.Mesh(new THREE.BoxGeometry(2.0,0.6,0.08),new THREE.MeshStandardMaterial({color:def.color,emissive:def.color,emissiveIntensity:0.9})); sign.position.set(0,2.2,-0.95); g.add(sign);
-    const beacon=new THREE.Mesh(new THREE.SphereGeometry(0.16,10,10),new THREE.MeshStandardMaterial({color:def.color,emissive:def.color,emissiveIntensity:1})); beacon.position.set(0,3.15,-0.1); g.add(beacon);
-    g.position.set(def.pos.x,0,def.pos.z); g.traverse(o=>{o.castShadow=true;}); sc.add(g);
+    const top=new THREE.Mesh(new THREE.BoxGeometry(2.7,0.12,1.3),T(TX.wood,[2,1],{rough:.8,color:0xa8835a})); top.position.y=1.15; g.add(top);
+    // back wall + shelves
+    const back=new THREE.Mesh(new THREE.BoxGeometry(2.7,2.2,0.12),T(TX.wood,[2,2],{rough:.9,color:0x7c6038})); back.position.set(0,1.55,-1.0); g.add(back);
+    [1.55,2.15].forEach(sy=>{ const sh=new THREE.Mesh(new THREE.BoxGeometry(2.4,0.06,0.34),M(0x4a3a24,{roughness:.85})); sh.position.set(0,sy,-0.8); g.add(sh); });
+    // posts + sloped striped awning
+    [-1.25,1.25].forEach(sx=>{ const p=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,2.6,8),M(0x20241b,{metalness:.5,roughness:.5})); p.position.set(sx,1.3,0.45); g.add(p); });
+    const awning=new THREE.Mesh(new THREE.BoxGeometry(3.0,0.07,1.9),new THREE.MeshStandardMaterial({map:awnTex,roughness:.85}));
+    awning.position.set(0,2.85,-0.05); awning.rotation.x=0.16; g.add(awning);
+    const valance=new THREE.Mesh(new THREE.BoxGeometry(3.0,0.3,0.05),new THREE.MeshStandardMaterial({map:awnTex.clone(),roughness:.85}));
+    valance.position.set(0,2.62,0.9); g.add(valance);
+    // category displays
+    if(def.cat==='weapon'){
+      // rifles on the upper shelf, ammo crate on the counter
+      [-0.7,0.2].forEach((rx,i)=>{ const r2=new THREE.Mesh(new THREE.BoxGeometry(0.8,0.09,0.07),M(0x22262c,{metalness:.5,roughness:.45})); r2.position.set(rx,2.28,-0.8); r2.rotation.z=0.5; g.add(r2);
+        const mag=new THREE.Mesh(new THREE.BoxGeometry(0.07,0.18,0.06),M(0x171a1f)); mag.position.set(rx-0.05,2.18,-0.8); g.add(mag); });
+      const ammo=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.3,0.4),T(TX.wood,[1,1],{rough:.9,color:0x6f7a3a})); ammo.position.set(0.75,1.36,-0.15); g.add(ammo);
+      const ammo2=ammo.clone(); ammo2.position.set(-0.75,1.36,0.05); ammo2.rotation.y=0.4; g.add(ammo2);
+      [-0.55,-0.4,-0.25].forEach(bx=>{ const b=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.16,6),M(0xc9a227,{metalness:.8,roughness:.3})); b.position.set(bx,1.3,-0.7); g.add(b); }); // brass rounds on the shelf
+    } else {
+      // medkits + serum bottles
+      [[-0.7,1.7,-0.8],[0.45,1.7,-0.8],[-0.1,2.3,-0.8]].forEach(pos=>{
+        const kit=new THREE.Mesh(new THREE.BoxGeometry(0.42,0.28,0.3),M(0xe8e6e0,{roughness:.6})); kit.position.set(pos[0],pos[1],pos[2]); g.add(kit);
+        const cr1=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.07,0.02),M(0xc23a28)); cr1.position.set(pos[0],pos[1],pos[2]+0.16); g.add(cr1);
+        const cr2=new THREE.Mesh(new THREE.BoxGeometry(0.07,0.2,0.02),M(0xc23a28)); cr2.position.set(pos[0],pos[1],pos[2]+0.16); g.add(cr2);
+      });
+      [0.6,0.8].forEach(bx=>{ const bt=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.26,8),new THREE.MeshStandardMaterial({color:0x6fcf1e,emissive:0x3a7a10,emissiveIntensity:.4,roughness:.4,transparent:true,opacity:.85})); bt.position.set(bx,1.34,-0.3); g.add(bt); });
+      const cool=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.45,0.4),M(0xeef0f2,{roughness:.5})); cool.position.set(-0.8,1.43,-0.2); g.add(cool);
+      const coolLid=new THREE.Mesh(new THREE.BoxGeometry(0.52,0.07,0.42),M(0xc23a28,{roughness:.5})); coolLid.position.set(-0.8,1.69,-0.2); g.add(coolLid);
+    }
+    // glowing sign + beacon
+    const sign=new THREE.Mesh(new THREE.BoxGeometry(2.0,0.6,0.08),new THREE.MeshStandardMaterial({color:def.color,emissive:def.color,emissiveIntensity:0.9})); sign.position.set(0,3.3,-0.6); g.add(sign);
+    const beacon=new THREE.Mesh(new THREE.SphereGeometry(0.16,10,10),new THREE.MeshStandardMaterial({color:def.color,emissive:def.color,emissiveIntensity:1})); beacon.position.set(0,3.75,-0.6); g.add(beacon);
+    // ground mat in front of the counter
+    const mat2=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.1),new THREE.MeshStandardMaterial({color:0x23261e,roughness:1}));
+    mat2.rotation.x=-Math.PI/2; mat2.position.set(0,0.018,1.25); g.add(mat2);
+    g.position.set(def.pos.x,0,def.pos.z); g.rotation.y=def.rot||0;
+    g.traverse(o=>{o.castShadow=true;}); sc.add(g);
     Game.obstacles.push({min:{x:def.pos.x-1.4,z:def.pos.z-0.7},max:{x:def.pos.x+1.4,z:def.pos.z+0.7}});
     Game.stands.push({cat:def.cat,name:def.name,icon:def.icon,color:def.color,pos:new THREE.Vector3(def.pos.x,0,def.pos.z),beacon});
   });
@@ -3494,8 +3630,8 @@ const SHOP=[
    can(){return (Game.runRegen||0)<5;}, buy(){ Game.runRegen=(Game.runRegen||0)+1; }},
 ];
 const STANDS=[
-  {cat:'weapon',  name:'ARMURERIE',  icon:'🔫', color:0x3cd6ff, pos:{x:-12,z:12}},
-  {cat:'support', name:'INFIRMERIE', icon:'➕', color:0x9bff3c, pos:{x:12,z:12}},
+  {cat:'weapon',  name:'ARMURERIE',  icon:'🔫', color:0x3cd6ff, pos:{x:-5,z:-11}},
+  {cat:'support', name:'INFIRMERIE', icon:'➕', color:0x9bff3c, pos:{x:5,z:-11}},
 ];
 let _standCat=null;
 function openStand(cat){
