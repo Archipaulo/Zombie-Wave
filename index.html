@@ -276,17 +276,24 @@
     color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 0 #1a5aa8;}
   .hb-cur{display:flex;align-items:center;gap:8px;}
   .hb-coin,.hb-gem{display:flex;align-items:center;gap:6px;background:#15528f;border:2px solid #3d86d6;border-radius:20px;
-    padding:4px 12px 4px 8px;color:#fff;font-weight:700;font-size:14px;min-width:66px;}
+    padding:4px 12px 4px 8px;color:#fff;font-weight:700;font-size:14px;min-width:66px;box-shadow:inset 0 2px 0 rgba(255,255,255,.16), 0 2px 6px rgba(0,0,0,.2);}
   .hb-gear{width:36px;height:36px;border-radius:10px;background:linear-gradient(180deg,#43a3ff,#2b7fe0);border:2px solid #cfe8ff;
     color:#fff;font-size:17px;cursor:pointer;box-shadow:0 3px 0 #1a5aa8;}
   .hb-gear:active{transform:translateY(2px);box-shadow:0 1px 0 #1a5aa8;}
 
   .hb-left{position:absolute;left:10px;top:66px;display:flex;flex-direction:column;gap:9px;z-index:4;}
   .hb-right{position:absolute;right:10px;top:66px;display:flex;flex-direction:column;gap:9px;z-index:4;align-items:flex-end;}
-  .hb-tile{width:70px;height:70px;border-radius:16px;border:none;cursor:pointer;position:relative;
+  .hb-tile{width:70px;height:70px;border-radius:16px;border:1px solid rgba(255,255,255,.28);cursor:pointer;position:relative;overflow:hidden;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:'Fredoka';
     background:linear-gradient(180deg,#3aa0ff,#2b7fe0);box-shadow:0 5px 0 #1a5aa8, inset 0 2px 0 rgba(255,255,255,.35);
     transition:transform .09s ease, filter .15s ease;}
+  .hb-tile::before{content:"";position:absolute;left:6%;right:6%;top:4%;height:46%;border-radius:12px 12px 50% 50%;
+    background:linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,.04));pointer-events:none;}
+  .hb-tile .ic,.hb-tile .tl{position:relative;}
+  .hb-tile .ic{filter:drop-shadow(0 2px 3px rgba(0,0,0,.35));}
+  .hb-banner{overflow:hidden;border:1px solid rgba(255,255,255,.3);}
+  .hb-banner::before{content:"";position:absolute;left:5%;right:5%;top:4%;height:42%;border-radius:12px 12px 50% 50%;
+    background:linear-gradient(180deg,rgba(255,255,255,.35),rgba(255,255,255,.03));pointer-events:none;}
   @media (hover:hover){
     .hb-tile:hover{transform:translateY(-2px) scale(1.04);filter:brightness(1.1);}
     .hb-banner:hover{transform:translateY(-2px);filter:brightness(1.08);}
@@ -342,10 +349,11 @@
   .pass-bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#ffd23c,#ffa92b);transition:width .4s;}
   .pass-val{font-size:12px;color:#eaf4ff;font-weight:600;}
   .hb-modes{flex:1 1 auto;display:flex;gap:7px;justify-content:center;align-items:flex-end;}
-  .mode{font-family:'Fredoka';font-weight:600;font-size:13px;color:#fff;border:none;cursor:pointer;
-    padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.22);display:flex;align-items:center;gap:5px;transition:transform .07s;}
+  .mode{font-family:'Fredoka';font-weight:600;font-size:13px;color:#fff;border:1px solid rgba(255,255,255,.14);cursor:pointer;
+    padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.3);display:flex;align-items:center;gap:5px;
+    transition:transform .07s, background .15s ease;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}
   .mode .m-ic{font-size:11px;}
-  .mode.sel{background:linear-gradient(180deg,#ffd23c,#f5a623);color:#5a3a06;box-shadow:0 4px 0 #c97e10;}
+  .mode.sel{background:linear-gradient(180deg,#ffd23c,#f5a623);color:#5a3a06;box-shadow:0 4px 0 #c97e10, inset 0 2px 0 rgba(255,255,255,.45);border-color:rgba(255,255,255,.5);}
   .mode:active{transform:translateY(2px);}
   .hb-play{flex:0 0 auto;font-family:'Fredoka';font-weight:700;font-size:30px;color:#fff;border:none;cursor:pointer;position:relative;overflow:hidden;
     padding:14px 44px;border-radius:18px;background:linear-gradient(180deg,#ffc83c,#f59a18);letter-spacing:1px;
@@ -381,7 +389,9 @@
   /* loadout summary strip */
   .loadout-strip{position:absolute;bottom:92px;left:50%;transform:translateX(-50%);z-index:4;display:flex;gap:8px;}
   .ld-pill{font-family:'Fredoka';font-weight:600;font-size:12px;color:#fff;border:none;cursor:pointer;
-    background:rgba(8,16,24,.55);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:6px 12px;display:flex;align-items:center;gap:6px;}
+    background:rgba(8,16,24,.55);border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:6px 12px;display:flex;align-items:center;gap:6px;
+    backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-shadow:inset 0 1px 0 rgba(255,255,255,.14), 0 3px 10px rgba(0,0,0,.3);transition:border-color .15s ease, background .15s ease;}
+  .ld-pill:hover{border-color:rgba(155,255,60,.55);background:rgba(10,20,28,.7);}
   .ld-pill:active{transform:translateY(1px);}
   .ld-pill .ld-dot{width:12px;height:12px;border-radius:50%;display:inline-block;background:#9bff3c;}
 
@@ -409,7 +419,9 @@
   .pass-tier.s2{background:#150d18;border-color:#3a2c46;}
   @keyframes cardIn{from{opacity:0;transform:translateY(14px) scale(.96);}to{opacity:1;transform:none;}}
   @keyframes cardInX{from{opacity:0;transform:translateX(22px);}to{opacity:1;transform:none;}}
-  .big-btn{font-family:'Black Ops One';font-size:18px;letter-spacing:2px;padding:13px 30px;border:none;border-radius:14px;cursor:pointer;background:linear-gradient(180deg,#9bff3c,#6fcf1e);color:#0c1208;box-shadow:0 4px 0 #4f9410;}
+  .big-btn{font-family:'Black Ops One';font-size:18px;letter-spacing:2px;padding:13px 30px;border:none;border-radius:14px;cursor:pointer;background:linear-gradient(180deg,#9bff3c,#6fcf1e);color:#0c1208;box-shadow:0 4px 0 #4f9410, inset 0 2px 0 rgba(255,255,255,.45);position:relative;overflow:hidden;}
+  .big-btn::before{content:"";position:absolute;left:4%;right:4%;top:6%;height:42%;border-radius:12px 12px 50% 50%;
+    background:linear-gradient(180deg,rgba(255,255,255,.38),rgba(255,255,255,.04));pointer-events:none;}
   .big-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #4f9410;}
   .login-streak{font-family:'Black Ops One';color:#ffd23c;font-size:17px;letter-spacing:1px;margin:2px 0 12px;}
   .login-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;}
@@ -526,7 +538,9 @@
   .bq-pip.on{background:#ffd23c;}
   .bq-swatch{width:26px;height:26px;border-radius:7px;border:2px solid rgba(255,255,255,.6);}
   .bq-buy{font-family:'Fredoka';font-weight:700;font-size:14px;color:#fff;border:none;cursor:pointer;border-radius:12px;padding:9px;margin-top:auto;
-    background:linear-gradient(180deg,#5fd24f,#3aa83a);box-shadow:0 4px 0 #2a7d2a;}
+    background:linear-gradient(180deg,#5fd24f,#3aa83a);box-shadow:0 4px 0 #2a7d2a, inset 0 2px 0 rgba(255,255,255,.35);position:relative;overflow:hidden;}
+  .bq-buy::before{content:"";position:absolute;left:4%;right:4%;top:6%;height:40%;border-radius:10px 10px 50% 50%;
+    background:linear-gradient(180deg,rgba(255,255,255,.32),rgba(255,255,255,.02));pointer-events:none;}
   .bq-buy:active{transform:translateY(2px);box-shadow:0 2px 0 #2a7d2a;}
   .bq-buy.locked{background:linear-gradient(180deg,#6b6a8f,#4a4970);box-shadow:0 4px 0 #34335a;opacity:.85;cursor:not-allowed;}
   .bq-buy.owned{background:linear-gradient(180deg,#43a3ff,#2b7fe0);box-shadow:0 4px 0 #1a5aa8;}
@@ -4011,133 +4025,187 @@ function buildPreviewChar(){
   pTorso=pHead=pArmL=pArmR=null;
   const cls=Game.loadout.char;
   const KIT={
-    ranger:    {tw:1.00,td:1.00,bulk:1.00, outfit:0x4f7a32, pants:0x39432a, skin:0xf0c08a, hood:0x3f6328, accent:0x7bd34a},
-    erreur:    {tw:0.96,td:0.96,bulk:0.98, outfit:0x141019, pants:0x1a1622, skin:0xf0c08a, accent:0xb14aff, monitor:1},
-    sniper:    {tw:1.00,td:1.00,bulk:1.02, outfit:0x8a7d4e, pants:0x5f5636, skin:0xf0c08a, accent:0xb23b2a, cap:1},
-    berserker: {tw:1.30,td:1.16,bulk:1.18, outfit:0x6e2520, pants:0x2a2622, skin:0xe6b07a, accent:0x9aa0a6, mask:1, pads:1},
+    ranger:    {outfit:0x4f7a32, pants:0x39432a, skin:0xf0c08a, hood:0x3f6328, accent:0x7bd34a},
+    erreur:    {outfit:0x1a1424, pants:0x1a1622, skin:0xf0c08a, accent:0xb14aff, monitor:1},
+    sniper:    {outfit:0x8a7d4e, pants:0x5f5636, skin:0xf0c08a, accent:0xb23b2a, cap:1},
+    berserker: {outfit:0x6e2520, pants:0x2a2622, skin:0xe6b07a, accent:0x9aa0a6, mask:1, pads:1},
   };
   const K=KIT[cls]||KIT.ranger;
-  const tw=K.tw, td=K.td, bulk=K.bulk;
   const outfitColor=Game.cosmetics.color!=null?Game.cosmetics.color:K.outfit;
-  const M=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.82},o));
-  const outfit=M(outfitColor), pants=M(K.pants), skin=M(K.skin,{roughness:.9}),
-        dark=M(0x1b1e24), boot=M(0x141519), glove=M(0x15161b),
-        metal=M(0x6b7178,{roughness:.45,metalness:.5}), accent=M(K.accent);
-  const box=(w,h,d,mat,x,y,z,parent)=>{ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); m.position.set(x,y,z); (parent||pChar).add(m); return m; };
 
-  // legs + boots + knee pads
-  const legGeo=new THREE.BoxGeometry(0.27*tw,0.6,0.28*td), legX=0.17*tw;
-  [-legX,legX].forEach(x=>{ const l=new THREE.Mesh(legGeo,pants); l.position.set(x,0.34,0); pChar.add(l);
-    box(0.31*tw,0.18,0.42*td,boot,x,0.09,0.06);
-    box(0.24*tw,0.15,0.08,dark,x,0.4,0.16*td); });
-  const baseY=0.62;
-
-  // torso
-  pTorso=new THREE.Mesh(new THREE.BoxGeometry(0.66*tw*bulk,0.72,0.4*td),outfit);
-  pTorso.position.y=baseY+0.36; pChar.add(pTorso);
-  box(0.7*tw*bulk,0.12,0.42*td,dark,0,baseY+0.04,0); // belt
-  box(0.12,0.08,0.06,M(0x8a8f96,{metalness:.6,roughness:.4}),0,baseY+0.04,0.21*td); // belt buckle
-  // diagonal gear strap across the chest
-  const strap=box(0.13,0.82,0.05,dark,0,baseY+0.38,0.205*td); strap.rotation.z=0.62;
-  box(0.1,0.08,0.07,M(0x6b7178,{metalness:.5,roughness:.5}),-0.12,baseY+0.52,0.215*td); // strap clip
-
-  // class chest emblem
-  if(cls==='erreur'){ box(0.4,0.16,0.04,M(0x2a0f38,{emissive:0x6a1f9a,emissiveIntensity:.6}),0,baseY+0.34,0.205); }
-  if(cls==='berserker'){ const sk=M(0xe8e4dc); box(0.18,0.2,0.04,sk,0,baseY+0.4,0.205);
-    box(0.05,0.05,0.05,dark,-0.05,baseY+0.44,0.23); box(0.05,0.05,0.05,dark,0.05,baseY+0.44,0.23); }
-  if(cls==='sniper'){ [[-0.16,0.5],[0.16,0.4]].forEach(p=>box(0.16,0.18,0.06,dark,p[0],baseY+0.34,0.205)); } // pouches/vest
-
-  // shoulder pads + spikes (berserker)
-  if(K.pads){
-    const padMat=M(0x4a4f55,{metalness:.5,roughness:.5});
-    [-1,1].forEach(s=>{ box(0.34,0.26,0.44,padMat,s*(0.33*tw*bulk+0.08),baseY+0.62,0);
-      for(let i=0;i<3;i++){ const sp=new THREE.Mesh(new THREE.ConeGeometry(0.055,0.18,6),metal); sp.position.set(s*(0.33*tw*bulk+0.08)+(i-1)*0.11,baseY+0.8,0); pChar.add(sp); } });
-  }
-
-  // arms (bare for berserker) + hands
-  const armW=0.18*tw*bulk, armGeo=new THREE.BoxGeometry(armW,0.58,armW);
-  const sleeve = cls==='berserker' ? skin : outfit;
-  pArmL=new THREE.Mesh(armGeo,sleeve); pArmR=new THREE.Mesh(armGeo,sleeve);
-  const armX=0.33*tw*bulk+armW*0.55, armY=baseY+0.4;
-  pArmL.position.set(-armX,armY,0); pArmR.position.set(armX,armY,0); pChar.add(pArmL,pArmR);
-  const hGeo=new THREE.BoxGeometry(armW*1.05,0.18,armW*1.05);
-  [-armX,armX].forEach(x=>{ box(armW*1.05,0.18,armW*1.05,glove,x,baseY+0.06,0);
-    box(armW*1.14,0.07,armW*1.14,accent,x,baseY+0.17,0); });
-
-  // head
-  pHead=new THREE.Group(); pHead.position.y=baseY+1.0; pChar.add(pHead);
-  if(K.monitor){
-    box(0.6,0.58,0.56,M(0x0c0b12,{roughness:.5,metalness:.2}),0,0,0,pHead);
-    box(0.5,0.44,0.04,M(0x150a1e,{emissive:0x33104a,emissiveIntensity:.6,roughness:.4}),0,0.02,0.285,pHead);
-    const em=new THREE.MeshStandardMaterial({color:0xff52f0,emissive:0xff52f0,emissiveIntensity:1.3,roughness:.3});
-    [-0.12,0.12].forEach(ex=>{ [0.6,-0.6].forEach(rz=>{ const bar=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.045,0.05),em); bar.position.set(ex,0.04,0.31); bar.rotation.z=rz; pHead.add(bar); }); });
-    const gm=M(0xb14aff,{emissive:0x7a1fbf,emissiveIntensity:.8});
-    for(let i=0;i<6;i++){ const s=0.05+Math.random()*0.06; const c=new THREE.Mesh(new THREE.BoxGeometry(s,s,s),gm); c.position.set((Math.random()-0.5)*1.1,(Math.random()-0.15)*0.9,(Math.random()-0.5)*0.5-0.15); pHead.add(c); }
-  } else {
-    box(0.52,0.5,0.5,skin,0,0,0,pHead);
-    const eyeMat=M(0x141414,{roughness:.5});
-    [-0.12,0.12].forEach(x=>box(0.07,0.1,0.04,eyeMat,x,0.02,0.255,pHead));
-    // facial details: brows, nose, mouth, ears
-    const browMat=M(0x3a2c1e,{roughness:.9});
-    [-0.12,0.12].forEach(x=>{ const b=box(0.1,0.035,0.03,browMat,x,0.1,0.26,pHead); b.rotation.z=x<0?-0.12:0.12; });
-    box(0.07,0.09,0.06,M(K.skin,{roughness:.85}),0,-0.04,0.27,pHead);
-    box(0.12,0.025,0.03,M(0x8a5a4a,{roughness:.8}),0,-0.16,0.256,pHead);
-    [-1,1].forEach(s2=>box(0.04,0.1,0.08,skin,s2*0.28,-0.01,0.02,pHead));
-    if(cls==='ranger'){
-      const hood=M(K.hood,{roughness:.95});
-      box(0.6,0.18,0.6,hood,0,0.28,0,pHead);            // top
-      box(0.66,0.52,0.18,hood,0,0.02,-0.26,pHead);      // back
-      [-1,1].forEach(s=>box(0.14,0.5,0.52,hood,s*0.31,0.02,-0.02,pHead)); // sides framing face
-      box(0.22,0.18,0.22,hood,0,0.36,0.16,pHead);       // peak
-    } else if(cls==='sniper'){
-      const capMat=M(K.outfit,{roughness:.8});
-      box(0.56,0.16,0.54,capMat,0,0.3,0,pHead);
-      box(0.5,0.06,0.28,capMat,0,0.27,0.35,pHead);      // brim
-      box(0.12,0.1,0.04,accent,0,0.33,0.18,pHead);      // red tab
-      [-1,1].forEach(s=>box(0.09,0.18,0.18,dark,s*0.3,-0.02,0,pHead)); // headset cups
-    } else if(cls==='berserker'){
-      const mask=M(0xdedacf,{roughness:.7}); box(0.52,0.52,0.07,mask,0,0.02,0.27,pHead);
-      const hole=M(0x202024);
-      [-0.1,0.1].forEach(x=>box(0.06,0.07,0.03,hole,x,0.09,0.31,pHead));   // eye holes
-      [-0.09,0,0.09].forEach(x=>box(0.03,0.12,0.03,hole,x,-0.12,0.31,pHead)); // breathing slits
-      box(0.5,0.18,0.5,M(0x3a2e22),0,0.27,0,pHead);     // matted hair on top
+  // ---- fine voxel build (mini pixels), one InstancedMesh per material ----
+  const V=0.05, GEO=new THREE.BoxGeometry(V,V,V);
+  const PAL={
+    outfit:{col:outfitColor,rough:.85,metal:0,jit:.10},
+    pants:{col:K.pants,rough:.9,metal:0,jit:.10},
+    skin:{col:K.skin,rough:.85,metal:0,jit:.05},
+    dark:{col:0x1b1e24,rough:.8,metal:.1,jit:.12},
+    boot:{col:0x16171c,rough:.85,metal:0,jit:.12},
+    glove:{col:0x15161b,rough:.8,metal:0,jit:.10},
+    metal:{col:0x7b828a,rough:.45,metal:.6,jit:.08},
+    accent:{col:K.accent,rough:.6,metal:.15,jit:.08},
+    hood:{col:K.hood||outfitColor,rough:.9,metal:0,jit:.12},
+    hair:{col:0x3a2c1e,rough:.95,metal:0,jit:.14},
+    wood:{col:0x6e4a26,rough:.85,metal:0,jit:.14},
+    mask:{col:0xdedacf,rough:.7,metal:0,jit:.07},
+    white:{col:0xe8e8ee,rough:.6,metal:0,jit:.04},
+    mouth:{col:0x8a5a4a,rough:.8,metal:0,jit:.05},
+    screen:{col:0x150a1e,rough:.4,metal:.1,jit:.03,em:0x33104a,emi:.7},
+    pink:{col:0xff52f0,rough:.3,metal:0,jit:.02,em:0xff52f0,emi:1.2}
+  };
+  function newPart(){
+    const buckets={},seen={};
+    function vox(key,x,y,z){ const id=x+'|'+y+'|'+z; if(seen[id])return; seen[id]=1; (buckets[key]=buckets[key]||[]).push([x,y,z]); }
+    function fill(key,x0,x1,y0,y1,z0,z1){ for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++)for(let z=z0;z<=z1;z++) vox(key,x,y,z); }
+    function build(ox,oy,oz){
+      const grp=new THREE.Group(); grp.position.set(ox*V,oy*V,oz*V);
+      const m4=new THREE.Matrix4(), c=new THREE.Color(), b=new THREE.Color();
+      for(const key in buckets){
+        const list=buckets[key], P=PAL[key];
+        const mat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:P.rough,metalness:P.metal,
+          emissive:P.em||0x000000,emissiveIntensity:P.emi||0});
+        const im=new THREE.InstancedMesh(GEO,mat,list.length);
+        b.setHex(P.col); if(b.convertSRGBToLinear) b.convertSRGBToLinear();
+        for(let i=0;i<list.length;i++){ const p=list[i];
+          m4.makeTranslation((p[0]+0.5)*V-ox*V,(p[1]+0.5)*V-oy*V,(p[2]+0.5)*V-oz*V);
+          im.setMatrixAt(i,m4);
+          if(im.setColorAt){ const j=1+(Math.random()*2-1)*P.jit;
+            c.setRGB(Math.min(1,b.r*j),Math.min(1,b.g*j),Math.min(1,b.b*j)); im.setColorAt(i,c); }
+        }
+        if(!im.setColorAt) mat.color.setHex(P.col);
+        if(im.instanceColor) im.instanceColor.needsUpdate=true;
+        im.instanceMatrix.needsUpdate=true; im.frustumCulled=false;
+        grp.add(im);
+      }
+      return grp;
     }
-    if(Game.cosmetics.hat==='helmet'){ box(0.58,0.3,0.58,metal,0,0.3,0,pHead); }
+    return {vox,fill,build};
   }
 
-  // ---- held weapon by class ----
-  const handY=baseY+0.04, handZ=0.24;
-  if(cls==='ranger'){
-    const wood=M(0x6e4a26), am=M(0xb9a06a);
-    const quiver=box(0.16,0.5,0.16,M(0x5a3b22),-0.16,baseY+0.55,-0.26); quiver.rotation.z=0.25;
-    for(let i=0;i<3;i++){ const a=new THREE.Mesh(new THREE.CylinderGeometry(0.014,0.014,0.42,5),am); a.position.set(-0.2+i*0.06,baseY+0.86,-0.26); a.rotation.z=0.25; pChar.add(a);
-      box(0.06,0.06,0.06,accent,-0.27+i*0.06,baseY+1.04,-0.24); }
-    const bow=new THREE.Group();
-    const b1=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.46,0.05),wood); b1.position.y=0.2; b1.rotation.z=0.28; bow.add(b1);
-    const b2=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.46,0.05),wood); b2.position.y=-0.2; b2.rotation.z=-0.28; bow.add(b2);
-    const str=new THREE.Mesh(new THREE.BoxGeometry(0.012,0.86,0.012),M(0xdddddd)); bow.add(str);
-    bow.position.set(armX,handY+0.16,handZ); bow.rotation.x=-0.1; pChar.add(bow);
+  const wide=K.pads?1:0, TX0=-6-wide, TX1=5+wide;   // torso span (berserker broader)
+
+  // ---- lower body (static) ----
+  const lower=newPart();
+  [[-5,-2],[1,4]].forEach(L=>{
+    lower.fill('boot',L[0],L[1],0,1,-2,3);                      // boots, toe forward
+    lower.fill('dark',L[0]+1,L[0]+2,7,8,2,2);                   // knee pads (carved first)
+    lower.fill('pants',L[0],L[1],2,13,-2,2);                    // legs
+  });
+  lower.fill('dark',TX0,TX1,14,14,-3,2);                        // belt
+  lower.vox('metal',-1,14,2); lower.vox('metal',0,14,2);        // buckle
+  pChar.add(lower.build(0,0,0));
+
+  // ---- torso (breathing) ----
+  const torso=newPart();
+  if(cls==='berserker'){
+    torso.vox('dark',-1,21,2); torso.vox('dark',0,21,2);        // skull eyes
+    torso.vox('dark',-1,19,2); torso.vox('dark',0,19,2);        // skull jaw
+    torso.fill('white',-2,1,18,22,2,2);                         // skull war paint
+  } else if(cls==='sniper'){
+    torso.fill('dark',-5,-3,18,20,2,2); torso.fill('dark',2,4,17,19,2,2); // vest pouches
+    torso.fill('dark',TX0,TX1,24,24,-3,2);                      // collar strap
   } else if(cls==='erreur'){
-    const gm=M(0x1a1d24,{metalness:.4,roughness:.5});
-    const g=new THREE.Group(); g.add(new THREE.Mesh(new THREE.BoxGeometry(0.1,0.12,0.34),gm));
-    const grip=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.18,0.1),gm); grip.position.set(0,-0.13,0.09); g.add(grip);
-    g.position.set(armX,handY,handZ+0.04); g.rotation.x=-0.1; pChar.add(g);
-  } else if(cls==='berserker'){
-    const wood=M(0x6e4a26), bat=new THREE.Group();
-    const shaft=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.06,0.66,8),wood); bat.add(shaft);
-    const club=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.085,0.34,8),wood); club.position.y=0.34; bat.add(club);
-    for(let i=0;i<8;i++){ const a=i/8*6.28; const n=new THREE.Mesh(new THREE.ConeGeometry(0.025,0.1,5),metal); n.position.set(Math.cos(a)*0.11,0.34,Math.sin(a)*0.11); n.rotation.z=Math.PI/2; n.rotation.y=-a; bat.add(n); }
-    bat.position.set(armX+0.05,handY+0.06,handZ); bat.rotation.x=0.6; pChar.add(bat);
-  } else { // sniper rifle
-    const sk=currentSkin();
-    const gm=new THREE.MeshStandardMaterial({color:(sk.body!=null?sk.body:0x1c2026),roughness:sk.rough,metalness:sk.metal,emissive:sk.emissive||0x000000,emissiveIntensity:(sk.emint||0)*0.8});
-    const g=new THREE.Group();
-    g.add(new THREE.Mesh(new THREE.BoxGeometry(0.1,0.13,0.72),gm));
-    const grip=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.18,0.1),gm); grip.position.set(0,-0.13,0.08); g.add(grip);
-    const mag=new THREE.Mesh(new THREE.BoxGeometry(0.07,0.2,0.12),gm); mag.position.set(0,-0.14,-0.04); g.add(mag);
-    const scope=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.18,8),gm); scope.rotation.x=Math.PI/2; scope.position.set(0,0.12,-0.08); g.add(scope);
-    g.position.set(armX,handY,handZ+0.12); g.rotation.x=-0.12; pChar.add(g);
+    torso.fill('pink',-1,0,20,21,2,2);                          // glowing emblem
+    torso.fill('dark',TX0,TX1,15,16,-3,2);                      // hoodie band
+  } else { // ranger
+    torso.fill('dark',-1,0,15,25,2,2);                          // center zip
+    torso.fill('accent',TX0+1,TX0+1,16,24,2,2); torso.fill('accent',TX1-1,TX1-1,16,24,2,2); // piping
   }
+  torso.fill('outfit',TX0,TX1,15,25,-3,2);
+  torso.fill(K.monitor?'dark':'skin',-2,1,26,26,-2,1);          // neck
+  pTorso=torso.build(0,20.5,0); pChar.add(pTorso);
+
+  // ---- arms (sway) ----
+  const AW=K.pads?5:4;
+  function buildArm(side){
+    const p=newPart();
+    const x0= side<0 ? TX0-1-AW : TX1+2, x1=x0+AW-1;
+    if(K.pads){
+      p.fill('metal',x0-1,x1+1,24,26,-3,2);                     // armoured pad
+      for(let i=0;i<3;i++) p.vox('metal',x0+i*2,27,-1);         // spikes
+    }
+    p.fill('glove',x0,x1,14,15,-2,1);                           // gloves
+    p.fill('accent',x0,x1,16,16,-2,1);                          // wristband
+    if(K.mask){ p.fill('skin',x0,x1,17,25,-2,1); }              // bare arms
+    else { p.fill('accent',x0,x1,21,21,-2,1);                   // armband
+           p.fill('outfit',x0,x1,17,25,-2,1); }
+    // held items follow the hand
+    if(side>0 && cls==='berserker'){
+      for(const n of [[x1+2,22,2],[x0-1,21,3],[x0+1,25,4]]) p.vox('metal',n[0],n[1],n[2]); // nails
+      p.fill('wood',x0+1,x0+2,12,20,2,3);                       // bat shaft
+      p.fill('wood',x0,x0+3,20,25,1,4);                         // bat head
+    }
+    if(side>0 && cls==='erreur'){
+      p.fill('dark',x0+1,x0+2,16,17,2,6);                       // pistol slide
+      p.fill('dark',x0+1,x0+2,14,15,2,3);                       // pistol grip
+      p.vox('pink',x0+1,17,6); p.vox('pink',x0+2,17,6);         // glowing muzzle
+    }
+    const cx=(x0+x1+1)/2;
+    return p.build(cx,25,0);
+  }
+  pArmL=buildArm(-1); pArmR=buildArm(1); pChar.add(pArmL,pArmR);
+
+  // ---- head (looks around) ----
+  const head=newPart();
+  if(Game.cosmetics.hat==='helmet'){ head.fill('metal',-5,4,35,36,-4,3); head.fill('metal',-5,4,34,34,3,3); }
+  if(K.monitor){
+    // X-eyes drawn first, then screen, then casing
+    [[-3,32],[-1,32],[-2,31],[-3,30],[-1,30],[0,32],[2,32],[1,31],[0,30],[2,30]].forEach(e=>head.vox('pink',e[0],e[1],2));
+    [[-3,28],[0,28],[2,28]].forEach(e=>head.vox('pink',e[0],e[1],2));   // glitch mouth
+    head.fill('screen',-3,2,28,34,2,2);
+    head.fill('dark',-4,3,27,35,-3,2);
+    head.fill('metal',3,3,36,37,-2,-2); head.vox('pink',3,38,-2);       // antenna
+    // floating glitch cubes
+    [[6,33,1],[7,30,-1],[-7,34,0],[-6,29,2],[5,37,-2],[-7,31,-3]].forEach(e=>head.vox('pink',e[0],e[1],e[2]));
+  } else {
+    if(K.mask){
+      head.fill('hair',-4,3,34,35,-3,2);                                 // matted hair
+      head.vox('dark',-2,31,2); head.vox('dark',1,31,2);                 // eye holes
+      [[-1,28],[0,28],[-1,29],[0,29]].forEach(e=>head.vox('dark',e[0],e[1],2)); // breathing slits
+      head.fill('mask',-4,3,27,33,2,2);                                  // bone mask
+    } else {
+      // eyes / brows / mouth carved before the skin fill
+      head.vox('white',-3,31,2); head.vox('dark',-2,31,2);
+      head.vox('dark',1,31,2);  head.vox('white',2,31,2);
+      head.vox('hair',-3,32,2); head.vox('hair',-2,32,2);
+      head.vox('hair',1,32,2);  head.vox('hair',2,32,2);
+      head.vox('mouth',-1,28,2); head.vox('mouth',0,28,2);
+    }
+    if(cls==='ranger'){
+      head.fill('hood',-5,4,35,35,-4,3);                                 // hood cap
+      head.fill('hood',-4,3,34,34,3,3);                                  // visor edge
+      head.fill('hood',-5,-5,27,34,-4,2); head.fill('hood',4,4,27,34,-4,2); // sides
+      head.fill('hood',-5,4,27,34,-4,-4);                                // back
+    } else if(cls==='sniper'){
+      head.vox('accent',-1,35,3); head.vox('accent',0,35,3);             // cap badge
+      head.fill('outfit',-5,4,35,35,-4,3);                               // cap
+      head.fill('outfit',-3,2,34,34,3,5);                                // brim
+      head.fill('dark',-5,-5,29,31,-1,0); head.fill('dark',4,4,29,31,-1,0); // headset
+      head.fill('hair',-4,3,34,34,-3,2);                                 // hair under cap
+    } else if(cls==='berserker'){
+      // hair already added above the mask
+    }
+    head.fill('skin',-4,3,27,35,-3,2);                                   // head
+  }
+  pHead=head.build(0,27,0); pChar.add(pHead);
+
+  // ---- class gear (static) ----
+  const gear=newPart();
+  if(cls==='ranger'){
+    gear.fill('dark',1,3,16,23,-6,-4);                                   // quiver
+    for(let i=0;i<3;i++){ gear.vox('wood',1+i,24,-5); gear.vox('accent',1+i,25,-5); } // arrows
+    const bx=TX0-3;                                                      // bow in the left hand
+    [[17,3],[18,3],[19,2],[20,2],[21,1],[13,3],[12,3],[11,2],[10,2],[9,1]].forEach(p=>gear.vox('wood',bx,p[0],p[1]));
+    gear.fill('accent',bx,bx,14,16,3,3);                                 // grip
+    gear.fill('white',bx,bx,9,21,1,1);                                   // string
+  } else if(cls==='sniper'){
+    for(let k=0;k<=14;k++){ const x=-7+k, y=Math.round(13+k*0.8); gear.fill('dark',x,x,y,y+1,-5,-4); } // rifle across the back
+    gear.fill('metal',0,2,23,24,-5,-4);                                  // scope
+    gear.fill('wood',-7,-5,12,14,-5,-4);                                 // stock
+    gear.fill('metal',8,9,25,26,-5,-4);                                  // muzzle
+  }
+  pChar.add(gear.build(0,0,0));
+
   applyCharArt();
 }
 
