@@ -79,14 +79,28 @@
   #hud{position:absolute;inset:0;z-index:10;pointer-events:none;font-weight:600;}
   #hud::before{content:"";position:absolute;inset:0;pointer-events:none;
     box-shadow:inset 0 0 120px 30px rgba(0,0,0,.38);}
-  #crosshair{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%);transition:transform .1s ease;}
+  #crosshair{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%) scale(var(--xhs,1));transition:transform .1s ease;}
   #crosshair::after{content:"";position:absolute;left:50%;top:50%;width:3px;height:3px;margin:-1.5px 0 0 -1.5px;border-radius:50%;
     background:rgba(215,211,196,.9);box-shadow:0 0 4px #000;}
   #crosshair span{position:absolute;background:rgba(215,211,196,.85);box-shadow:0 0 4px #000,0 0 6px rgba(155,255,60,.25);border-radius:1px;}
   #crosshair .v{left:50%;width:2px;height:8px;margin-left:-1px;} #crosshair .v.t{top:0;} #crosshair .v.b{bottom:0;}
   #crosshair .h{top:50%;height:2px;width:8px;margin-top:-1px;} #crosshair .h.l{left:0;} #crosshair .h.r{right:0;}
   #crosshair.hit span{background:var(--blood);box-shadow:0 0 6px rgba(226,38,28,.8);}
-  #crosshair.hit{transform:translate(-50%,-50%) scale(1.18);}
+  #crosshair.hit{transform:translate(-50%,-50%) scale(calc(var(--xhs,1)*1.22));}
+  /* kill-streak combo */
+  #comboHud{position:absolute;left:50%;top:34%;transform:translate(-50%,-50%);z-index:11;pointer-events:none;
+    font-family:'Black Ops One';font-size:26px;letter-spacing:2px;color:#ffd23c;
+    text-shadow:0 0 18px rgba(255,210,60,.55),0 3px 0 #000;}
+  #comboHud.hot{color:#ff6f3c;text-shadow:0 0 24px rgba(255,90,30,.7),0 3px 0 #000;}
+  #comboHud.pop{animation:comboPop .35s cubic-bezier(.2,1.6,.4,1);}
+  @keyframes comboPop{0%{transform:translate(-50%,-50%) scale(.6);}60%{transform:translate(-50%,-50%) scale(1.25);}100%{transform:translate(-50%,-50%) scale(1);}}
+  body.touch #comboHud{font-size:17px;top:30%;}
+  /* directional damage indicator */
+  #dmgDir{position:absolute;left:50%;top:50%;width:150px;height:150px;transform:translate(-50%,-50%);z-index:9;pointer-events:none;
+    border:5px solid transparent;border-top-color:rgba(226,38,28,.9);border-radius:50%;opacity:0;transition:opacity .35s ease;
+    filter:drop-shadow(0 0 8px rgba(226,38,28,.6));}
+  #dmgDir.show{opacity:1;transition:opacity .05s ease;}
+  body.touch #dmgDir{width:110px;height:110px;border-width:4px;}
 
   .hud-tl{position:absolute;top:18px;left:68px;background:linear-gradient(135deg,var(--glass),rgba(10,14,8,.15));
     border-left:3px solid var(--tox);padding:8px 16px 8px 12px;clip-path:polygon(0 0,100% 0,calc(100% - 12px) 100%,0 100%);}
@@ -776,6 +790,8 @@
     <div id="puActive"></div>
     <div id="standPrompt" class="hidden"></div>
     <div id="breakBanner" class="hidden"></div>
+    <div id="comboHud" class="hidden"></div>
+    <div id="dmgDir"></div>
   </div>
   <div id="dmgNumbers"></div>
   <div id="rewardFx" class="hidden"><div class="rfx-flash"></div><div class="rfx-card"><div class="rfx-ic" id="rfxIc">🎁</div><div class="rfx-lb" id="rfxLb"></div><div class="rfx-sub">RÉCOMPENSE OBTENUE</div></div></div>
@@ -1324,7 +1340,15 @@ const Audio = (()=>{
       o.connect(g); g.connect(sfxG); o.start(tt); o.stop(tt+0.22); };
     thump(t,0.5); thump(t+0.18,0.32);
   }
-  return {init,resume,shot,reload,empty,groan,hurt,buy,denied,click,boom,stinger,heartbeat,setVolume,setSfx,setMusic,setAmb,startMusic,stopMusic,musicOn,startCombat,stopCombat,setCombatIntensity,startAmbience,stopAmbience};
+  function step(fast){
+    if(!ctx) return;
+    const t=ctx.currentTime;
+    const s=noise(0.05), f=ctx.createBiquadFilter(), g=ctx.createGain();
+    f.type='lowpass'; f.frequency.value=fast?950:700;
+    g.gain.setValueAtTime(fast?0.09:0.06,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.05);
+    s.connect(f); f.connect(g); g.connect(sfxG); s.start(t);
+  }
+  return {init,resume,shot,reload,empty,groan,hurt,buy,denied,click,boom,stinger,heartbeat,step,setVolume,setSfx,setMusic,setAmb,startMusic,stopMusic,musicOn,startCombat,stopCombat,setCombatIntensity,startAmbience,stopAmbience};
 })();
 
 // ---------------- Weapons config ----------------
@@ -1561,6 +1585,7 @@ const Game = {
   ammo:{}, reserve:{},
   curWeapon:'pistol', lastShot:0, reloading:false, reloadEnd:0,
   weaponMesh:null, muzzle:null, recoilKick:0, sway:new THREE.Vector2(),
+  ads:false, adsT:0, combo:0, comboUntil:0,
   shake:0, drops:[], decals:[], pu:{doublePoints:0,instaKill:0},
   particlePool:[], zombiePool:{walker:[],runner:[],brute:[],spitter:[],bomber:[],screamer:[],armored:[]},
   runWeapon:{dmg:0,mag:0,sight:0}, ability:{id:null,cd:0,cdLeft:0,dur:0,activeUntil:0},
@@ -2438,6 +2463,7 @@ function makeZombie(type){
   head.userData={zombie:null,part:'head'}; torso.userData={zombie:null,part:'body'};
   const z={mesh:g,type,hp:zhp,maxhp:zhp,speed:zspd,dmg:def.dmg,reward:def.reward,
     head,torso,armL,armR,legL,legR,upper,hunch,belly,
+    skinMat:skin,shirtMat:shirt,flash:0,kbX:0,kbZ:0,
     ranged:!!def.ranged,bomber:!!def.bomber,armored:!!def.armored,screamer:!!def.screamer,
     spitCd:rand(1.2,2.6),screamCd:rand(3,6),buffUntil:0,
     gait:{freq:rand(0.85,1.25),amp:rand(0.42,0.6),limp:rand(0,0.16),sway:rand(0.03,0.09),bob:rand(0.02,0.05),head:rand(0.12,0.28),twitch:rand(1.5,5)},
@@ -2454,6 +2480,9 @@ function resetZombie(z){
   const def=ZTYPE[z.type], D=DIFF[Game.difficulty]||DIFF.normal;
   z.hp=z.maxhp=def.hp*D.hpMul; z.speed=def.speed*D.speedMul;
   z.dead=false; z.collapse=0; z._exploded=false; z.boss=false;
+  z.flash=0; z.kbX=0; z.kbZ=0;
+  if(z.skinMat) z.skinMat.emissiveIntensity=0;
+  if(z.shirtMat) z.shirtMat.emissiveIntensity=0;
   z.attackCd=0; z.spitCd=rand(1.2,2.6); z.screamCd=rand(3,6); z.buffUntil=0; z.groanCd=rand(1,5); z.phase=Math.random()*6;
   z.mesh.rotation.set(0,0,0); z.mesh.position.y=0; z.mesh.visible=true;
   if(z.armL){ z.armL.rotation.set(-1.22,0,0); z.armR.rotation.set(-1.34,0,0); }
@@ -2732,7 +2761,7 @@ function updateSpits(dt){
   for(let i=Game.spits.length-1;i>=0;i--){ const s=Game.spits[i]; s.life-=dt; s.vel.y-=9*dt;
     s.mesh.position.addScaledVector(s.vel,dt); s.mesh.rotation.x+=dt*8;
     const d=Math.hypot(pp.x-s.mesh.position.x, pp.y-s.mesh.position.y, pp.z-s.mesh.position.z);
-    if(d<1.1){ hurtPlayer(14); burst(s.mesh.position.clone(),0x9bff3c,8,2,0.4); Game.scene.remove(s.mesh); Game.spits.splice(i,1); continue; }
+    if(d<1.1){ hurtPlayer(14,s.mesh.position); burst(s.mesh.position.clone(),0x9bff3c,8,2,0.4); Game.scene.remove(s.mesh); Game.spits.splice(i,1); continue; }
     if(s.life<=0 || s.mesh.position.y<0.1){ burst(s.mesh.position.clone().setY(0.1),0x6fcf1e,5,1.5,0.3); Game.scene.remove(s.mesh); Game.spits.splice(i,1); }
   }
 }
@@ -2742,7 +2771,7 @@ function bomberExplode(z){
   Audio.boom(); addShake(0.28);
   burst(pos,0xff7a1a,26,4,0.8); burst(pos,0x333333,14,3,1); spawnDecal(pos);
   const d=Math.hypot(Game.player.pos.x-pos.x, Game.player.pos.z-pos.z);
-  if(d<4.5) hurtPlayer(Math.round(z.dmg*(1-d/4.5)));
+  if(d<4.5) hurtPlayer(Math.round(z.dmg*(1-d/4.5)),z.mesh.position);
   for(const o of Game.zombies){ if(o===z||o.dead||o.bomber) continue;
     if(o.mesh.position.distanceTo(pos)<3.2) damageZombie(o,90,false,o.mesh.position.clone().setY(1)); }
 }
@@ -3009,11 +3038,17 @@ function setupInput(){
   addEventListener('keyup',e=>{ Game.keys[e.code]=false; });
 
   const cv=Game.renderer.domElement;
-  cv.addEventListener('mousedown',()=>{ if(Game.state==='playing'){Game.mouseDown=true; tryShoot();} });
-  addEventListener('mouseup',()=>{ Game.mouseDown=false; });
+  cv.addEventListener('mousedown',e=>{
+    if(Game.state!=='playing') return;
+    if(e.button===2){ Game.ads=true; return; }       // right click: aim down sights
+    if(e.button!==0) return;
+    Game.mouseDown=true; tryShoot();
+  });
+  addEventListener('mouseup',e=>{ if(e.button===2) Game.ads=false; else Game.mouseDown=false; });
+  addEventListener('contextmenu',e=>{ if(Game.state==='playing'&&document.pointerLockElement) e.preventDefault(); });
   addEventListener('mousemove',e=>{
     if(Game.state!=='playing'||!document.pointerLockElement) return;
-    const sens=Game.settings.sensitivity, iy=Game.settings.invertY?-1:1;
+    const sens=Game.settings.sensitivity*(1-0.4*Game.adsT), iy=Game.settings.invertY?-1:1;
     Game.player.yaw   -= e.movementX*0.0022*sens;
     Game.player.pitch -= e.movementY*0.0022*sens*iy;
     Game.player.pitch = clamp(Game.player.pitch,-1.2,1.2);
@@ -3109,7 +3144,7 @@ function tryShoot(){
 
   const ray=new THREE.Raycaster();
   const insta=Game.pu.instaKill>performance.now();
-  const sp=w.spread*(1-0.18*(Game.runWeapon.sight||0));
+  const sp=w.spread*(1-0.18*(Game.runWeapon.sight||0))*(1-0.5*Game.adsT);
   const erratic=Game.loadout.char==='erreur' ? (0.75+Math.random()*1.0) : 1; // ERREUR: unpredictable bonus damage
   const dmgScale=Game.dmgMul*Game.buff.dmg*(1+0.12*(Game.runWeapon.dmg||0))*erratic;
   let anyHit=false, anyHead=false;
@@ -3150,6 +3185,16 @@ function damageZombie(z,dmg,head,point){
   const hp=point||z.mesh.position.clone().setY(1.2);
   damageNumber(hp,shown,head);
   burst(hp,0x8a0f0a,head?12:7,head?3:2,0.5);
+  // white hit flash on the body
+  z.flash=0.09;
+  if(z.skinMat){ z.skinMat.emissive.setHex(0xffffff); z.skinMat.emissiveIntensity=0.55; }
+  if(z.shirtMat){ z.shirtMat.emissive.setHex(0xffffff); z.shirtMat.emissiveIntensity=0.4; }
+  // knockback away from the player (heavies barely budge)
+  const pp=Game.player.pos, zp=z.mesh.position;
+  let kx=zp.x-pp.x, kz=zp.z-pp.z; const kd=Math.hypot(kx,kz)||1;
+  const heavy=(z.type==='brute'||z.boss||z.armored)?0.25:1;
+  const imp=Math.min(1,dmg/z.maxhp)*(head?2.0:1.4)*heavy;
+  z.kbX+=(kx/kd)*imp; z.kbZ+=(kz/kd)*imp;
   if(z.hp<=0){ killZombie(z,head); }
 }
 function killZombie(z,head,noScore){
@@ -3158,7 +3203,21 @@ function killZombie(z,head,noScore){
   if(z.bomber) bomberExplode(z);
   const mult=(Game.pu.doublePoints>performance.now()?2:1)*(Game.loadout.char==='erreur'?1.25:1);
   if(!noScore){
-    Game.points+=Math.round(z.reward*mult); Game.score+=Math.round((z.reward+(head?50:0))*mult); Game.kills++;
+    // kill streak: chained kills boost the score (up to +100 %)
+    const nowK=performance.now();
+    Game.combo=(nowK<Game.comboUntil)?Game.combo+1:1;
+    Game.comboUntil=nowK+2600;
+    const comboMul=1+0.1*Math.min(Game.combo-1,10);
+    if(Game.combo>=2){
+      const ch=$('comboHud');
+      ch.textContent='COMBO ×'+Game.combo;
+      ch.classList.remove('hidden');
+      ch.classList.toggle('hot',Game.combo>=6);
+      ch.classList.remove('pop'); void ch.offsetWidth; ch.classList.add('pop');
+    }
+    Game.points+=Math.round(z.reward*mult);
+    Game.score+=Math.round((z.reward+(head?50:0))*mult*comboMul);
+    Game.kills++;
     if(head) Game.headshots++;
   }
   burst(z.mesh.position.clone().setY(1.0),0x8a0f0a,18,3,0.7);
@@ -3436,11 +3495,26 @@ function updatePlayer(dt){
   p.pos.x += (fwdX*fAmt + rgtX*sAmt)*spd*dt;
   p.pos.z += (fwdZ*fAmt + rgtZ*sAmt)*spd*dt;
   resolveCircle(p.pos,p.radius);
-  // head bob
+  // head bob + footsteps
   const moving=len>0.05;
   p.bob += dt*(sprint?14:10)*(moving?1:0);
   const bobY=moving?Math.sin(p.bob)*0.04:0;
   p.pos.y=lerp(p.pos.y,1.6+bobY,0.3);
+  if(moving){ const stepI=Math.floor(p.bob/Math.PI); if(stepI!==p._step){ p._step=stepI; try{Audio.step(sprint);}catch(e){} } }
+  // aim-down-sights blend + dynamic FOV (sprint kick / ADS zoom / sniper FOCUS)
+  Game.adsT=lerp(Game.adsT,(Game.ads&&!isTouch)?1:0,Math.min(1,dt*12));
+  const focusOn=Game.ability&&Game.ability.id==='focus'&&Game.ability.activeUntil>performance.now();
+  const baseF=(Game.settings.fov||72)*(focusOn?0.6:1);
+  const targetF=Math.max(38, baseF - Game.adsT*16 + ((sprint&&moving)?5*(1-Game.adsT):0));
+  if(Math.abs(Game.camera.fov-targetF)>0.05){
+    Game.camera.fov=lerp(Game.camera.fov,targetF,Math.min(1,dt*10));
+    Game.camera.updateProjectionMatrix();
+  }
+  // dynamic crosshair: opens with recoil/movement, tightens when aiming
+  const xh=$('crosshair');
+  if(xh) xh.style.setProperty('--xhs',(1+Game.recoilKick*0.4+(moving?0.12:0)-Game.adsT*0.3).toFixed(3));
+  // combo decay
+  if(Game.combo>0 && performance.now()>Game.comboUntil){ Game.combo=0; $('comboHud').classList.add('hidden'); }
   // camera orientation
   Game.camera.position.copy(p.pos);
   if(Game.shake>0.001){
@@ -3457,8 +3531,12 @@ function updatePlayer(dt){
     const targetSwayX=clamp(mx,-1,1)*0.02 + (sprint?Math.sin(p.bob*0.5)*0.03:0);
     Game.sway.x=lerp(Game.sway.x,moving?Math.sin(p.bob)*0.012:0,0.2);
     Game.sway.y=lerp(Game.sway.y,moving?Math.abs(Math.cos(p.bob))*0.012:0,0.2);
-    Game.weaponMesh.position.set(0.22+Game.sway.x, -0.22-Game.sway.y - (sprint?0.04:0), -0.35+Game.recoilKick*0.04);
-    Game.weaponMesh.rotation.set(Game.recoilKick*0.5, sprint?0.4:0, 0);
+    const swayK=1-Game.adsT*0.75;
+    Game.weaponMesh.position.set(
+      lerp(0.22,0.02,Game.adsT)+Game.sway.x*swayK,
+      lerp(-0.22,-0.165,Game.adsT)-Game.sway.y*swayK - (sprint?0.04*(1-Game.adsT):0),
+      lerp(-0.35,-0.30,Game.adsT)+Game.recoilKick*0.04);
+    Game.weaponMesh.rotation.set(Game.recoilKick*0.5, sprint?0.4*(1-Game.adsT):0, 0);
   }
   // health regen
   if(performance.now()-p.lastHit>4000 && p.hp<p.maxhp){ p.hp=Math.min(p.maxhp,p.hp+(12+4*(Game.runRegen||0))*dt*Game.regenMul); updateHpUI(); }
@@ -3468,6 +3546,9 @@ function updateZombies(dt){
   const pp=Game.player.pos;
   for(let i=Game.zombies.length-1;i>=0;i--){
     const z=Game.zombies[i];
+    // hit flash decay (runs for dying zombies too)
+    if(z.flash>0){ z.flash-=dt;
+      if(z.flash<=0){ if(z.skinMat) z.skinMat.emissiveIntensity=0; if(z.shirtMat) z.shirtMat.emissiveIntensity=0; } }
     if(z.dead){
       z.collapse+=dt*3.2;
       const k=Math.min(z.collapse/(Math.PI/2),1);          // 0→1 fall progress
@@ -3484,6 +3565,13 @@ function updateZombies(dt){
       continue;
     }
     const zp=z.mesh.position;
+    // knockback impulse (decays fast)
+    if(z.kbX||z.kbZ){
+      zp.x+=z.kbX*dt*3.2; zp.z+=z.kbZ*dt*3.2;
+      const kdec=Math.min(1,dt*7); z.kbX-=z.kbX*kdec; z.kbZ-=z.kbZ*kdec;
+      if(Math.abs(z.kbX)<0.02&&Math.abs(z.kbZ)<0.02){ z.kbX=0; z.kbZ=0; }
+      resolveCircle(zp,0.4*z.s);
+    }
     let dx=pp.x-zp.x, dz=pp.z-zp.z;
     const dist=Math.hypot(dx,dz)||1;
     dx/=dist; dz/=dist;
@@ -3514,7 +3602,7 @@ function updateZombies(dt){
         resolveCircle(zp,0.4*z.s);
       }else{
         z.attackCd-=dt;
-        if(z.attackCd<=0){ z.attackCd=0.9; hurtPlayer(z.dmg); }
+        if(z.attackCd<=0){ z.attackCd=0.9; hurtPlayer(z.dmg,zp); }
       }
       if(z.boss) bossSpecials(z,dt,dist);
       if(z.screamer){ z.screamCd-=dt; if(z.screamCd<=0){ z.screamCd=rand(6,9); screamPulse(z); }
@@ -3542,11 +3630,23 @@ function updateZombies(dt){
   }
 }
 
-function hurtPlayer(dmg){
+function hurtPlayer(dmg,srcPos){
   const p=Game.player;
   dmg*=Game.buff.resist;
   p.hp-=dmg; p.lastHit=performance.now();
   flashDamage(); Audio.hurt(); updateHpUI(); addShake(0.18); vibrate(55);
+  // directional damage indicator (arc pointing toward the attacker)
+  if(srcPos){
+    const bearing=Math.atan2(srcPos.x-p.pos.x, srcPos.z-p.pos.z);
+    let rel=bearing-(p.yaw+Math.PI);
+    const deg=-rel*180/Math.PI;
+    const el=$('dmgDir');
+    if(el){
+      el.style.transform='translate(-50%,-50%) rotate('+deg.toFixed(0)+'deg)';
+      el.classList.add('show');
+      clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),600);
+    }
+  }
   if(p.hp<=0){ p.hp=0; updateHpUI(); gameOver(); }
 }
 
@@ -4466,6 +4566,7 @@ function startGame(){
   Game.ammo[sw]=WEAPONS[sw].mag; Game.reserve[sw]=WEAPONS[sw].reserve;
   Game.curWeapon=sw; Game.reloading=false; Game.mouseDown=false;
   Game.score=0; Game.points=(DIFF[Game.difficulty]||DIFF.normal).credits + (Game.upgrades.credits||0)*100; Game.kills=0; Game.headshots=0; Game.wave=0; Game.betweenWaves=false;
+  Game.combo=0; Game.comboUntil=0; Game.ads=false; Game.adsT=0; $('comboHud').classList.add('hidden');
   Game.runGren=0; ensureDaily();
 
   // equipment
