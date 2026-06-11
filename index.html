@@ -572,6 +572,161 @@
   .wheel-hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:42px;height:42px;border-radius:50%;
     background:#2b2358;border:3px solid #ffd23c;display:flex;align-items:center;justify-content:center;font-size:20px;z-index:4;}
 
+  /* ---------- mobile layout (touch devices) : in-game HUD rearranged around the controls ---------- */
+  body.touch #b-pause{width:38px;height:38px;top:10px;left:10px;font-size:15px;border-radius:10px;}
+  body.touch .hud-tl{top:10px;left:54px;padding:5px 12px 5px 9px;}
+  body.touch .wavebadge{font-size:19px;}
+  body.touch .wavebadge small{font-size:9px;letter-spacing:3px;}
+  body.touch .zleft{font-size:11px;margin-top:2px;}
+  body.touch .zleft b{font-size:13px;}
+  /* health moves to the top-left (the joystick owns the bottom-left) */
+  body.touch .hud-bl{bottom:auto;top:78px;left:12px;padding:6px 12px 6px 9px;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 100%,0 100%);}
+  body.touch .hpwrap{width:165px;}
+  body.touch .hplabel{font-size:9px;letter-spacing:2px;}
+  body.touch .hplabel b{font-size:11px;}
+  body.touch .hpbar{height:10px;margin-top:3px;}
+  body.touch #killfeed{top:142px;left:12px;gap:4px;}
+  body.touch .kf{font-size:10.5px;padding:2px 10px 2px 7px;}
+  /* compact minimap, score and ammo stacked under it (fire buttons own the bottom-right) */
+  body.touch #minimap{width:84px;height:84px;top:8px;right:8px;}
+  body.touch #minimap canvas{width:100%;height:100%;}
+  body.touch .hud-tr{top:98px;right:8px;padding:4px 8px 4px 12px;}
+  body.touch .score{font-size:15px;}
+  body.touch .points{font-size:10px;margin-top:0;}
+  body.touch .points b{font-size:13px;}
+  body.touch .hud-br{bottom:auto;top:152px;right:8px;padding:5px 8px 5px 12px;clip-path:polygon(0 0,100% 0,100% 100%,8px 100%);}
+  body.touch .wname{font-size:10px;letter-spacing:2px;margin-bottom:2px;}
+  body.touch .ammo{font-size:24px;}
+  body.touch .ammo small{font-size:12px;}
+  body.touch .reloading{font-size:10px;letter-spacing:2px;}
+  /* secondary HUD text: ability state lives on its button; equipment hint goes under the objective */
+  body.touch #abilityHud{display:none;}
+  body.touch #equipHud{left:50%;right:auto;bottom:auto;top:54px;transform:translateX(-50%);font-size:10px;letter-spacing:1px;}
+  body.touch #objective{width:min(46vw,280px);}
+  body.touch .obj-row{font-size:11px;gap:5px;}
+  body.touch .obj-row span:first-child{font-size:12px;}
+  body.touch .obj-bar{height:5px;margin-top:3px;}
+  body.touch #puActive{top:118px;gap:4px;}
+  body.touch .pu-chip{font-size:10px;padding:3px 9px;border-width:1.5px;gap:5px;}
+  body.touch .pu-chip b{font-size:9.5px;}
+  body.touch #breakBanner{top:48px;font-size:11px;padding:4px 10px;border-radius:9px;width:max-content;max-width:72vw;}
+  body.touch #standPrompt{top:56%;font-size:12px;padding:6px 12px;border-radius:9px;}
+  body.touch #dmgNumbers .dmgnum{font-size:14px;}
+  body.touch .dmgnum.head{font-size:19px;}
+  body.touch #hitmark{font-size:14px;}
+  body.touch .toast-big{font-size:clamp(20px,5vw,38px);}
+  body.touch .toast-sub{font-size:12px;letter-spacing:4px;}
+
+  /* ---------- compact layout for short screens (landscape phones) ---------- */
+  @media (max-height:560px){
+    /* hub */
+    .hb-top{height:42px;padding:0 8px;}
+    .hb-ava{width:27px;height:27px;font-size:13px;border-width:1.5px;}
+    .hb-pinfo{min-width:80px;}
+    .hb-name{font-size:10.5px;}
+    .hb-xp{height:5px;margin-top:3px;}
+    .hb-lvl{width:22px;height:22px;font-size:11px;border-radius:6px;}
+    .hb-coin,.hb-gem{padding:2px 8px 2px 6px;font-size:12px;min-width:52px;}
+    .hb-gear{width:29px;height:29px;font-size:13px;border-radius:8px;}
+    .hb-left,.hb-right{top:48px;gap:5px;}
+    .hb-tile{width:50px;height:50px;border-radius:12px;box-shadow:0 3px 0 #1a5aa8, inset 0 2px 0 rgba(255,255,255,.35);}
+    .hb-tile.yellow{box-shadow:0 3px 0 #c97e10, inset 0 2px 0 rgba(255,255,255,.4);}
+    .hb-tile.red{box-shadow:0 3px 0 #a82418, inset 0 2px 0 rgba(255,255,255,.3);}
+    .hb-tile.blue{box-shadow:0 3px 0 #1c6ec0, inset 0 2px 0 rgba(255,255,255,.35);}
+    .hb-tile .ic{font-size:18px;}
+    .hb-tile .tl{font-size:7.5px;}
+    .hb-banner{width:92px;height:58px;border-radius:12px;padding:6px;box-shadow:0 3px 0 #b4451c, inset 0 2px 0 rgba(255,255,255,.3);}
+    .hb-banner .bn-t{font-size:9px;max-width:58px;}
+    .hb-banner .bn-ic{font-size:16px;right:5px;bottom:4px;}
+    .ms-badge{min-width:15px;height:15px;font-size:9px;border-width:1.5px;}
+    .hb-bottom{height:68px;gap:8px;padding:0 10px 7px;}
+    .hb-pass{width:min(29vw,185px);}
+    .pass-tag{font-size:10px;}
+    .pass-bar{height:10px;margin-top:3px;border-width:1.5px;}
+    .pass-val{font-size:9.5px;}
+    .hb-modes{gap:4px;}
+    .mode{font-size:10.5px;padding:5px 8px;border-radius:9px;gap:3px;}
+    .mode .m-ic{font-size:9px;}
+    .mode.sel{box-shadow:0 3px 0 #c97e10, inset 0 2px 0 rgba(255,255,255,.45);}
+    .hb-play{font-size:20px;padding:9px 24px;border-radius:13px;box-shadow:0 4px 0 #c2700e, inset 0 2px 0 rgba(255,255,255,.4);}
+    .hb-charname{bottom:94px;font-size:13px;}
+    .loadout-strip{bottom:72px;gap:5px;}
+    .ld-pill{font-size:9.5px;padding:3px 8px;gap:4px;}
+    .ld-pill .ld-dot{width:8px;height:8px;}
+    /* panels + boutique */
+    .lo-panel{padding:8px;}
+    .lo-card{padding:10px;border-radius:13px;}
+    .lo-head{font-size:14px;margin-bottom:6px;}
+    .lo-x{width:27px;height:27px;font-size:12px;border-radius:8px;}
+    .set-row{font-size:13px;padding:6px 2px;}
+    .set-row b{font-size:12px;}
+    .set-hint{font-size:11px;margin:6px 2px 10px;}
+    .set-lbl{font-size:12px;margin-bottom:4px;}
+    .lobsec h4{font-size:11px;letter-spacing:3px;margin-bottom:6px;}
+    .lobcard{padding:8px;min-width:116px;flex-basis:116px;}
+    .lob-art{height:64px;border-radius:7px;margin-bottom:5px;}
+    .lobcard h5{font-size:11px;}
+    .lobcard p{font-size:10px;}
+    .lobcard .stat{font-size:9px;margin-top:3px;}
+    .hb-play.sm{font-size:14px;padding:8px 18px;margin-top:8px;}
+    .bq-top{padding:6px 10px;}
+    .bq-title{font-size:15px;letter-spacing:1px;}
+    .bq-back{font-size:12px;padding:6px 10px;border-radius:9px;}
+    .bq-tabs{padding:7px 10px 0;gap:5px;}
+    .bq-tab{font-size:12px;padding:6px 12px;}
+    .bq-grid{grid-template-columns:repeat(auto-fill,minmax(146px,1fr));gap:8px;padding:10px;}
+    .bq-card{padding:10px;border-radius:12px;gap:3px;}
+    .bq-card .bc-ic{font-size:22px;}
+    .bq-card h5{font-size:12.5px;}
+    .bq-card p{font-size:10.5px;min-height:26px;}
+    .bq-buy{font-size:12px;padding:7px;border-radius:9px;}
+    .ms-sec{font-size:11px;margin:9px 5px 5px;}
+    .pass-summary{margin-bottom:7px;}
+    .ps-lvl{font-size:12px;} .ps-lvl b{font-size:15px;}
+    .ps-xp{font-size:11px;}
+    .pass-tier{flex:0 0 96px;padding:8px 7px;gap:4px;border-radius:10px;}
+    .pass-tier .pt-ic{font-size:24px;}
+    .pass-tier .pt-lb{font-size:10px;min-height:22px;}
+    .pass-tier .pt-btn{font-size:11px;padding:5px 0;}
+    .login-grid{gap:4px;}
+    .login-cell{padding:5px 2px;border-radius:8px;}
+    .login-cell .lc-ic{font-size:14px;}
+    .login-streak{font-size:13px;margin:0 0 7px;}
+    .big-btn{font-size:14px;padding:9px 20px;border-radius:10px;}
+    .news-item h5{font-size:12.5px;}
+    .news-item p{font-size:11px;}
+    .prof-grid{gap:6px;}
+    .prof-stat{padding:8px;border-radius:9px;}
+    .prof-stat b{font-size:16px;}
+    .prof-stat span{font-size:10px;margin-top:3px;}
+    .pz-body{gap:10px;padding:10px;}
+    .pz-col{padding:12px;gap:8px;border-radius:13px;}
+    .pz-col h4{font-size:14px;}
+    .chest{font-size:52px;}
+    .wheel-wrap{width:min(46vh,190px);height:min(46vh,190px);}
+    .wheel-hub{width:32px;height:32px;font-size:15px;}
+    .wlabel{font-size:11px;}
+    /* full-page overlays become scrollable and tighter */
+    .overlay{justify-content:flex-start;overflow-y:auto;padding:16px 14px 20px;}
+    .overlay .title{margin-top:4px;}
+    .title{font-size:clamp(26px,7vw,44px);}
+    .tagline{font-size:11px;letter-spacing:4px;margin-top:6px;}
+    .panel{margin-top:14px;gap:9px;}
+    .btn{padding:11px 16px;font-size:clamp(13px,2.8vw,16px);}
+    .help{margin-top:12px;font-size:11px;line-height:1.7;}
+    .shopgrid{gap:8px;margin-top:12px;}
+    .shopcard{padding:10px;}
+    .shopcard h3{font-size:13px;}
+    .shopcard p{font-size:11px;min-height:auto;margin:4px 0 8px;}
+    .shopcard .cost{font-size:12px;top:10px;right:10px;}
+    .countdown{margin-top:12px;font-size:12px;}
+    .statline{font-size:13px;padding:6px 0;}
+    .tut-row{font-size:12px;padding:6px 2px;gap:8px;}
+    .tut-ic{font-size:17px;width:24px;flex-basis:24px;}
+    .tut-tip{font-size:11px;margin-top:8px;}
+    #oRecord{font-size:13px;margin-top:6px;}
+  }
+
   /* rotate-to-landscape gate */
   #rotate{z-index:50 !important;}
   #rotate .phone{width:60px;height:104px;border:3px solid var(--tox);border-radius:12px;position:relative;margin-bottom:28px;
@@ -967,6 +1122,7 @@ const lerp = (a,b,t)=>a+(b-a)*t;
 const rand = (a,b)=>a+Math.random()*(b-a);
 
 const isTouch = (('ontouchstart' in window) || navigator.maxTouchPoints>0) && window.matchMedia('(pointer:coarse)').matches;
+if(isTouch) document.body.classList.add('touch'); // enables the mobile HUD layout (CSS)
 
 // ---------------- Audio engine (synthesized) ----------------
 const Audio = (()=>{
