@@ -79,14 +79,28 @@
   #hud{position:absolute;inset:0;z-index:10;pointer-events:none;font-weight:600;}
   #hud::before{content:"";position:absolute;inset:0;pointer-events:none;
     box-shadow:inset 0 0 120px 30px rgba(0,0,0,.38);}
-  #crosshair{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%);transition:transform .1s ease;}
+  #crosshair{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%) scale(var(--xhs,1));transition:transform .1s ease;}
   #crosshair::after{content:"";position:absolute;left:50%;top:50%;width:3px;height:3px;margin:-1.5px 0 0 -1.5px;border-radius:50%;
     background:rgba(215,211,196,.9);box-shadow:0 0 4px #000;}
   #crosshair span{position:absolute;background:rgba(215,211,196,.85);box-shadow:0 0 4px #000,0 0 6px rgba(155,255,60,.25);border-radius:1px;}
   #crosshair .v{left:50%;width:2px;height:8px;margin-left:-1px;} #crosshair .v.t{top:0;} #crosshair .v.b{bottom:0;}
   #crosshair .h{top:50%;height:2px;width:8px;margin-top:-1px;} #crosshair .h.l{left:0;} #crosshair .h.r{right:0;}
   #crosshair.hit span{background:var(--blood);box-shadow:0 0 6px rgba(226,38,28,.8);}
-  #crosshair.hit{transform:translate(-50%,-50%) scale(1.18);}
+  #crosshair.hit{transform:translate(-50%,-50%) scale(calc(var(--xhs,1)*1.22));}
+  /* kill-streak combo */
+  #comboHud{position:absolute;left:50%;top:34%;transform:translate(-50%,-50%);z-index:11;pointer-events:none;
+    font-family:'Black Ops One';font-size:26px;letter-spacing:2px;color:#ffd23c;
+    text-shadow:0 0 18px rgba(255,210,60,.55),0 3px 0 #000;}
+  #comboHud.hot{color:#ff6f3c;text-shadow:0 0 24px rgba(255,90,30,.7),0 3px 0 #000;}
+  #comboHud.pop{animation:comboPop .35s cubic-bezier(.2,1.6,.4,1);}
+  @keyframes comboPop{0%{transform:translate(-50%,-50%) scale(.6);}60%{transform:translate(-50%,-50%) scale(1.25);}100%{transform:translate(-50%,-50%) scale(1);}}
+  body.touch #comboHud{font-size:17px;top:30%;}
+  /* directional damage indicator */
+  #dmgDir{position:absolute;left:50%;top:50%;width:150px;height:150px;transform:translate(-50%,-50%);z-index:9;pointer-events:none;
+    border:5px solid transparent;border-top-color:rgba(226,38,28,.9);border-radius:50%;opacity:0;transition:opacity .35s ease;
+    filter:drop-shadow(0 0 8px rgba(226,38,28,.6));}
+  #dmgDir.show{opacity:1;transition:opacity .05s ease;}
+  body.touch #dmgDir{width:110px;height:110px;border-width:4px;}
 
   .hud-tl{position:absolute;top:18px;left:68px;background:linear-gradient(135deg,var(--glass),rgba(10,14,8,.15));
     border-left:3px solid var(--tox);padding:8px 16px 8px 12px;clip-path:polygon(0 0,100% 0,calc(100% - 12px) 100%,0 100%);}
@@ -572,6 +586,161 @@
   .wheel-hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:42px;height:42px;border-radius:50%;
     background:#2b2358;border:3px solid #ffd23c;display:flex;align-items:center;justify-content:center;font-size:20px;z-index:4;}
 
+  /* ---------- mobile layout (touch devices) : in-game HUD rearranged around the controls ---------- */
+  body.touch #b-pause{width:38px;height:38px;top:10px;left:10px;font-size:15px;border-radius:10px;}
+  body.touch .hud-tl{top:10px;left:54px;padding:5px 12px 5px 9px;}
+  body.touch .wavebadge{font-size:19px;}
+  body.touch .wavebadge small{font-size:9px;letter-spacing:3px;}
+  body.touch .zleft{font-size:11px;margin-top:2px;}
+  body.touch .zleft b{font-size:13px;}
+  /* health moves to the top-left (the joystick owns the bottom-left) */
+  body.touch .hud-bl{bottom:auto;top:78px;left:12px;padding:6px 12px 6px 9px;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 100%,0 100%);}
+  body.touch .hpwrap{width:165px;}
+  body.touch .hplabel{font-size:9px;letter-spacing:2px;}
+  body.touch .hplabel b{font-size:11px;}
+  body.touch .hpbar{height:10px;margin-top:3px;}
+  body.touch #killfeed{top:142px;left:12px;gap:4px;}
+  body.touch .kf{font-size:10.5px;padding:2px 10px 2px 7px;}
+  /* compact minimap, score and ammo stacked under it (fire buttons own the bottom-right) */
+  body.touch #minimap{width:84px;height:84px;top:8px;right:8px;}
+  body.touch #minimap canvas{width:100%;height:100%;}
+  body.touch .hud-tr{top:98px;right:8px;padding:4px 8px 4px 12px;}
+  body.touch .score{font-size:15px;}
+  body.touch .points{font-size:10px;margin-top:0;}
+  body.touch .points b{font-size:13px;}
+  body.touch .hud-br{bottom:auto;top:152px;right:8px;padding:5px 8px 5px 12px;clip-path:polygon(0 0,100% 0,100% 100%,8px 100%);}
+  body.touch .wname{font-size:10px;letter-spacing:2px;margin-bottom:2px;}
+  body.touch .ammo{font-size:24px;}
+  body.touch .ammo small{font-size:12px;}
+  body.touch .reloading{font-size:10px;letter-spacing:2px;}
+  /* secondary HUD text: ability state lives on its button; equipment hint goes under the objective */
+  body.touch #abilityHud{display:none;}
+  body.touch #equipHud{left:50%;right:auto;bottom:auto;top:54px;transform:translateX(-50%);font-size:10px;letter-spacing:1px;}
+  body.touch #objective{width:min(46vw,280px);}
+  body.touch .obj-row{font-size:11px;gap:5px;}
+  body.touch .obj-row span:first-child{font-size:12px;}
+  body.touch .obj-bar{height:5px;margin-top:3px;}
+  body.touch #puActive{top:118px;gap:4px;}
+  body.touch .pu-chip{font-size:10px;padding:3px 9px;border-width:1.5px;gap:5px;}
+  body.touch .pu-chip b{font-size:9.5px;}
+  body.touch #breakBanner{top:48px;font-size:11px;padding:4px 10px;border-radius:9px;width:max-content;max-width:72vw;}
+  body.touch #standPrompt{top:56%;font-size:12px;padding:6px 12px;border-radius:9px;}
+  body.touch #dmgNumbers .dmgnum{font-size:14px;}
+  body.touch .dmgnum.head{font-size:19px;}
+  body.touch #hitmark{font-size:14px;}
+  body.touch .toast-big{font-size:clamp(20px,5vw,38px);}
+  body.touch .toast-sub{font-size:12px;letter-spacing:4px;}
+
+  /* ---------- compact layout for short screens (landscape phones) ---------- */
+  @media (max-height:560px){
+    /* hub */
+    .hb-top{height:42px;padding:0 8px;}
+    .hb-ava{width:27px;height:27px;font-size:13px;border-width:1.5px;}
+    .hb-pinfo{min-width:80px;}
+    .hb-name{font-size:10.5px;}
+    .hb-xp{height:5px;margin-top:3px;}
+    .hb-lvl{width:22px;height:22px;font-size:11px;border-radius:6px;}
+    .hb-coin,.hb-gem{padding:2px 8px 2px 6px;font-size:12px;min-width:52px;}
+    .hb-gear{width:29px;height:29px;font-size:13px;border-radius:8px;}
+    .hb-left,.hb-right{top:48px;gap:5px;}
+    .hb-tile{width:50px;height:50px;border-radius:12px;box-shadow:0 3px 0 #1a5aa8, inset 0 2px 0 rgba(255,255,255,.35);}
+    .hb-tile.yellow{box-shadow:0 3px 0 #c97e10, inset 0 2px 0 rgba(255,255,255,.4);}
+    .hb-tile.red{box-shadow:0 3px 0 #a82418, inset 0 2px 0 rgba(255,255,255,.3);}
+    .hb-tile.blue{box-shadow:0 3px 0 #1c6ec0, inset 0 2px 0 rgba(255,255,255,.35);}
+    .hb-tile .ic{font-size:18px;}
+    .hb-tile .tl{font-size:7.5px;}
+    .hb-banner{width:92px;height:58px;border-radius:12px;padding:6px;box-shadow:0 3px 0 #b4451c, inset 0 2px 0 rgba(255,255,255,.3);}
+    .hb-banner .bn-t{font-size:9px;max-width:58px;}
+    .hb-banner .bn-ic{font-size:16px;right:5px;bottom:4px;}
+    .ms-badge{min-width:15px;height:15px;font-size:9px;border-width:1.5px;}
+    .hb-bottom{height:68px;gap:8px;padding:0 10px 7px;}
+    .hb-pass{width:min(29vw,185px);}
+    .pass-tag{font-size:10px;}
+    .pass-bar{height:10px;margin-top:3px;border-width:1.5px;}
+    .pass-val{font-size:9.5px;}
+    .hb-modes{gap:4px;}
+    .mode{font-size:10.5px;padding:5px 8px;border-radius:9px;gap:3px;}
+    .mode .m-ic{font-size:9px;}
+    .mode.sel{box-shadow:0 3px 0 #c97e10, inset 0 2px 0 rgba(255,255,255,.45);}
+    .hb-play{font-size:20px;padding:9px 24px;border-radius:13px;box-shadow:0 4px 0 #c2700e, inset 0 2px 0 rgba(255,255,255,.4);}
+    .hb-charname{bottom:94px;font-size:13px;}
+    .loadout-strip{bottom:72px;gap:5px;}
+    .ld-pill{font-size:9.5px;padding:3px 8px;gap:4px;}
+    .ld-pill .ld-dot{width:8px;height:8px;}
+    /* panels + boutique */
+    .lo-panel{padding:8px;}
+    .lo-card{padding:10px;border-radius:13px;}
+    .lo-head{font-size:14px;margin-bottom:6px;}
+    .lo-x{width:27px;height:27px;font-size:12px;border-radius:8px;}
+    .set-row{font-size:13px;padding:6px 2px;}
+    .set-row b{font-size:12px;}
+    .set-hint{font-size:11px;margin:6px 2px 10px;}
+    .set-lbl{font-size:12px;margin-bottom:4px;}
+    .lobsec h4{font-size:11px;letter-spacing:3px;margin-bottom:6px;}
+    .lobcard{padding:8px;min-width:116px;flex-basis:116px;}
+    .lob-art{height:64px;border-radius:7px;margin-bottom:5px;}
+    .lobcard h5{font-size:11px;}
+    .lobcard p{font-size:10px;}
+    .lobcard .stat{font-size:9px;margin-top:3px;}
+    .hb-play.sm{font-size:14px;padding:8px 18px;margin-top:8px;}
+    .bq-top{padding:6px 10px;}
+    .bq-title{font-size:15px;letter-spacing:1px;}
+    .bq-back{font-size:12px;padding:6px 10px;border-radius:9px;}
+    .bq-tabs{padding:7px 10px 0;gap:5px;}
+    .bq-tab{font-size:12px;padding:6px 12px;}
+    .bq-grid{grid-template-columns:repeat(auto-fill,minmax(146px,1fr));gap:8px;padding:10px;}
+    .bq-card{padding:10px;border-radius:12px;gap:3px;}
+    .bq-card .bc-ic{font-size:22px;}
+    .bq-card h5{font-size:12.5px;}
+    .bq-card p{font-size:10.5px;min-height:26px;}
+    .bq-buy{font-size:12px;padding:7px;border-radius:9px;}
+    .ms-sec{font-size:11px;margin:9px 5px 5px;}
+    .pass-summary{margin-bottom:7px;}
+    .ps-lvl{font-size:12px;} .ps-lvl b{font-size:15px;}
+    .ps-xp{font-size:11px;}
+    .pass-tier{flex:0 0 96px;padding:8px 7px;gap:4px;border-radius:10px;}
+    .pass-tier .pt-ic{font-size:24px;}
+    .pass-tier .pt-lb{font-size:10px;min-height:22px;}
+    .pass-tier .pt-btn{font-size:11px;padding:5px 0;}
+    .login-grid{gap:4px;}
+    .login-cell{padding:5px 2px;border-radius:8px;}
+    .login-cell .lc-ic{font-size:14px;}
+    .login-streak{font-size:13px;margin:0 0 7px;}
+    .big-btn{font-size:14px;padding:9px 20px;border-radius:10px;}
+    .news-item h5{font-size:12.5px;}
+    .news-item p{font-size:11px;}
+    .prof-grid{gap:6px;}
+    .prof-stat{padding:8px;border-radius:9px;}
+    .prof-stat b{font-size:16px;}
+    .prof-stat span{font-size:10px;margin-top:3px;}
+    .pz-body{gap:10px;padding:10px;}
+    .pz-col{padding:12px;gap:8px;border-radius:13px;}
+    .pz-col h4{font-size:14px;}
+    .chest{font-size:52px;}
+    .wheel-wrap{width:min(46vh,190px);height:min(46vh,190px);}
+    .wheel-hub{width:32px;height:32px;font-size:15px;}
+    .wlabel{font-size:11px;}
+    /* full-page overlays become scrollable and tighter */
+    .overlay{justify-content:flex-start;overflow-y:auto;padding:16px 14px 20px;}
+    .overlay .title{margin-top:4px;}
+    .title{font-size:clamp(26px,7vw,44px);}
+    .tagline{font-size:11px;letter-spacing:4px;margin-top:6px;}
+    .panel{margin-top:14px;gap:9px;}
+    .btn{padding:11px 16px;font-size:clamp(13px,2.8vw,16px);}
+    .help{margin-top:12px;font-size:11px;line-height:1.7;}
+    .shopgrid{gap:8px;margin-top:12px;}
+    .shopcard{padding:10px;}
+    .shopcard h3{font-size:13px;}
+    .shopcard p{font-size:11px;min-height:auto;margin:4px 0 8px;}
+    .shopcard .cost{font-size:12px;top:10px;right:10px;}
+    .countdown{margin-top:12px;font-size:12px;}
+    .statline{font-size:13px;padding:6px 0;}
+    .tut-row{font-size:12px;padding:6px 2px;gap:8px;}
+    .tut-ic{font-size:17px;width:24px;flex-basis:24px;}
+    .tut-tip{font-size:11px;margin-top:8px;}
+    #oRecord{font-size:13px;margin-top:6px;}
+  }
+
   /* rotate-to-landscape gate */
   #rotate{z-index:50 !important;}
   #rotate .phone{width:60px;height:104px;border:3px solid var(--tox);border-radius:12px;position:relative;margin-bottom:28px;
@@ -621,6 +790,8 @@
     <div id="puActive"></div>
     <div id="standPrompt" class="hidden"></div>
     <div id="breakBanner" class="hidden"></div>
+    <div id="comboHud" class="hidden"></div>
+    <div id="dmgDir"></div>
   </div>
   <div id="dmgNumbers"></div>
   <div id="rewardFx" class="hidden"><div class="rfx-flash"></div><div class="rfx-card"><div class="rfx-ic" id="rfxIc">🎁</div><div class="rfx-lb" id="rfxLb"></div><div class="rfx-sub">RÉCOMPENSE OBTENUE</div></div></div>
@@ -967,6 +1138,7 @@ const lerp = (a,b,t)=>a+(b-a)*t;
 const rand = (a,b)=>a+Math.random()*(b-a);
 
 const isTouch = (('ontouchstart' in window) || navigator.maxTouchPoints>0) && window.matchMedia('(pointer:coarse)').matches;
+if(isTouch) document.body.classList.add('touch'); // enables the mobile HUD layout (CSS)
 
 // ---------------- Audio engine (synthesized) ----------------
 const Audio = (()=>{
@@ -1168,7 +1340,15 @@ const Audio = (()=>{
       o.connect(g); g.connect(sfxG); o.start(tt); o.stop(tt+0.22); };
     thump(t,0.5); thump(t+0.18,0.32);
   }
-  return {init,resume,shot,reload,empty,groan,hurt,buy,denied,click,boom,stinger,heartbeat,setVolume,setSfx,setMusic,setAmb,startMusic,stopMusic,musicOn,startCombat,stopCombat,setCombatIntensity,startAmbience,stopAmbience};
+  function step(fast){
+    if(!ctx) return;
+    const t=ctx.currentTime;
+    const s=noise(0.05), f=ctx.createBiquadFilter(), g=ctx.createGain();
+    f.type='lowpass'; f.frequency.value=fast?950:700;
+    g.gain.setValueAtTime(fast?0.09:0.06,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.05);
+    s.connect(f); f.connect(g); g.connect(sfxG); s.start(t);
+  }
+  return {init,resume,shot,reload,empty,groan,hurt,buy,denied,click,boom,stinger,heartbeat,step,setVolume,setSfx,setMusic,setAmb,startMusic,stopMusic,musicOn,startCombat,stopCombat,setCombatIntensity,startAmbience,stopAmbience};
 })();
 
 // ---------------- Weapons config ----------------
@@ -1405,6 +1585,7 @@ const Game = {
   ammo:{}, reserve:{},
   curWeapon:'pistol', lastShot:0, reloading:false, reloadEnd:0,
   weaponMesh:null, muzzle:null, recoilKick:0, sway:new THREE.Vector2(),
+  ads:false, adsT:0, combo:0, comboUntil:0,
   shake:0, drops:[], decals:[], pu:{doublePoints:0,instaKill:0},
   particlePool:[], zombiePool:{walker:[],runner:[],brute:[],spitter:[],bomber:[],screamer:[],armored:[]},
   runWeapon:{dmg:0,mag:0,sight:0}, ability:{id:null,cd:0,cdLeft:0,dur:0,activeUntil:0},
@@ -2282,6 +2463,7 @@ function makeZombie(type){
   head.userData={zombie:null,part:'head'}; torso.userData={zombie:null,part:'body'};
   const z={mesh:g,type,hp:zhp,maxhp:zhp,speed:zspd,dmg:def.dmg,reward:def.reward,
     head,torso,armL,armR,legL,legR,upper,hunch,belly,
+    skinMat:skin,shirtMat:shirt,flash:0,kbX:0,kbZ:0,
     ranged:!!def.ranged,bomber:!!def.bomber,armored:!!def.armored,screamer:!!def.screamer,
     spitCd:rand(1.2,2.6),screamCd:rand(3,6),buffUntil:0,
     gait:{freq:rand(0.85,1.25),amp:rand(0.42,0.6),limp:rand(0,0.16),sway:rand(0.03,0.09),bob:rand(0.02,0.05),head:rand(0.12,0.28),twitch:rand(1.5,5)},
@@ -2298,6 +2480,9 @@ function resetZombie(z){
   const def=ZTYPE[z.type], D=DIFF[Game.difficulty]||DIFF.normal;
   z.hp=z.maxhp=def.hp*D.hpMul; z.speed=def.speed*D.speedMul;
   z.dead=false; z.collapse=0; z._exploded=false; z.boss=false;
+  z.flash=0; z.kbX=0; z.kbZ=0;
+  if(z.skinMat) z.skinMat.emissiveIntensity=0;
+  if(z.shirtMat) z.shirtMat.emissiveIntensity=0;
   z.attackCd=0; z.spitCd=rand(1.2,2.6); z.screamCd=rand(3,6); z.buffUntil=0; z.groanCd=rand(1,5); z.phase=Math.random()*6;
   z.mesh.rotation.set(0,0,0); z.mesh.position.y=0; z.mesh.visible=true;
   if(z.armL){ z.armL.rotation.set(-1.22,0,0); z.armR.rotation.set(-1.34,0,0); }
@@ -2576,7 +2761,7 @@ function updateSpits(dt){
   for(let i=Game.spits.length-1;i>=0;i--){ const s=Game.spits[i]; s.life-=dt; s.vel.y-=9*dt;
     s.mesh.position.addScaledVector(s.vel,dt); s.mesh.rotation.x+=dt*8;
     const d=Math.hypot(pp.x-s.mesh.position.x, pp.y-s.mesh.position.y, pp.z-s.mesh.position.z);
-    if(d<1.1){ hurtPlayer(14); burst(s.mesh.position.clone(),0x9bff3c,8,2,0.4); Game.scene.remove(s.mesh); Game.spits.splice(i,1); continue; }
+    if(d<1.1){ hurtPlayer(14,s.mesh.position); burst(s.mesh.position.clone(),0x9bff3c,8,2,0.4); Game.scene.remove(s.mesh); Game.spits.splice(i,1); continue; }
     if(s.life<=0 || s.mesh.position.y<0.1){ burst(s.mesh.position.clone().setY(0.1),0x6fcf1e,5,1.5,0.3); Game.scene.remove(s.mesh); Game.spits.splice(i,1); }
   }
 }
@@ -2586,7 +2771,7 @@ function bomberExplode(z){
   Audio.boom(); addShake(0.28);
   burst(pos,0xff7a1a,26,4,0.8); burst(pos,0x333333,14,3,1); spawnDecal(pos);
   const d=Math.hypot(Game.player.pos.x-pos.x, Game.player.pos.z-pos.z);
-  if(d<4.5) hurtPlayer(Math.round(z.dmg*(1-d/4.5)));
+  if(d<4.5) hurtPlayer(Math.round(z.dmg*(1-d/4.5)),z.mesh.position);
   for(const o of Game.zombies){ if(o===z||o.dead||o.bomber) continue;
     if(o.mesh.position.distanceTo(pos)<3.2) damageZombie(o,90,false,o.mesh.position.clone().setY(1)); }
 }
@@ -2853,11 +3038,17 @@ function setupInput(){
   addEventListener('keyup',e=>{ Game.keys[e.code]=false; });
 
   const cv=Game.renderer.domElement;
-  cv.addEventListener('mousedown',()=>{ if(Game.state==='playing'){Game.mouseDown=true; tryShoot();} });
-  addEventListener('mouseup',()=>{ Game.mouseDown=false; });
+  cv.addEventListener('mousedown',e=>{
+    if(Game.state!=='playing') return;
+    if(e.button===2){ Game.ads=true; return; }       // right click: aim down sights
+    if(e.button!==0) return;
+    Game.mouseDown=true; tryShoot();
+  });
+  addEventListener('mouseup',e=>{ if(e.button===2) Game.ads=false; else Game.mouseDown=false; });
+  addEventListener('contextmenu',e=>{ if(Game.state==='playing'&&document.pointerLockElement) e.preventDefault(); });
   addEventListener('mousemove',e=>{
     if(Game.state!=='playing'||!document.pointerLockElement) return;
-    const sens=Game.settings.sensitivity, iy=Game.settings.invertY?-1:1;
+    const sens=Game.settings.sensitivity*(1-0.4*Game.adsT), iy=Game.settings.invertY?-1:1;
     Game.player.yaw   -= e.movementX*0.0022*sens;
     Game.player.pitch -= e.movementY*0.0022*sens*iy;
     Game.player.pitch = clamp(Game.player.pitch,-1.2,1.2);
@@ -2953,7 +3144,7 @@ function tryShoot(){
 
   const ray=new THREE.Raycaster();
   const insta=Game.pu.instaKill>performance.now();
-  const sp=w.spread*(1-0.18*(Game.runWeapon.sight||0));
+  const sp=w.spread*(1-0.18*(Game.runWeapon.sight||0))*(1-0.5*Game.adsT);
   const erratic=Game.loadout.char==='erreur' ? (0.75+Math.random()*1.0) : 1; // ERREUR: unpredictable bonus damage
   const dmgScale=Game.dmgMul*Game.buff.dmg*(1+0.12*(Game.runWeapon.dmg||0))*erratic;
   let anyHit=false, anyHead=false;
@@ -2994,6 +3185,16 @@ function damageZombie(z,dmg,head,point){
   const hp=point||z.mesh.position.clone().setY(1.2);
   damageNumber(hp,shown,head);
   burst(hp,0x8a0f0a,head?12:7,head?3:2,0.5);
+  // white hit flash on the body
+  z.flash=0.09;
+  if(z.skinMat){ z.skinMat.emissive.setHex(0xffffff); z.skinMat.emissiveIntensity=0.55; }
+  if(z.shirtMat){ z.shirtMat.emissive.setHex(0xffffff); z.shirtMat.emissiveIntensity=0.4; }
+  // knockback away from the player (heavies barely budge)
+  const pp=Game.player.pos, zp=z.mesh.position;
+  let kx=zp.x-pp.x, kz=zp.z-pp.z; const kd=Math.hypot(kx,kz)||1;
+  const heavy=(z.type==='brute'||z.boss||z.armored)?0.25:1;
+  const imp=Math.min(1,dmg/z.maxhp)*(head?2.0:1.4)*heavy;
+  z.kbX+=(kx/kd)*imp; z.kbZ+=(kz/kd)*imp;
   if(z.hp<=0){ killZombie(z,head); }
 }
 function killZombie(z,head,noScore){
@@ -3002,7 +3203,21 @@ function killZombie(z,head,noScore){
   if(z.bomber) bomberExplode(z);
   const mult=(Game.pu.doublePoints>performance.now()?2:1)*(Game.loadout.char==='erreur'?1.25:1);
   if(!noScore){
-    Game.points+=Math.round(z.reward*mult); Game.score+=Math.round((z.reward+(head?50:0))*mult); Game.kills++;
+    // kill streak: chained kills boost the score (up to +100 %)
+    const nowK=performance.now();
+    Game.combo=(nowK<Game.comboUntil)?Game.combo+1:1;
+    Game.comboUntil=nowK+2600;
+    const comboMul=1+0.1*Math.min(Game.combo-1,10);
+    if(Game.combo>=2){
+      const ch=$('comboHud');
+      ch.textContent='COMBO ×'+Game.combo;
+      ch.classList.remove('hidden');
+      ch.classList.toggle('hot',Game.combo>=6);
+      ch.classList.remove('pop'); void ch.offsetWidth; ch.classList.add('pop');
+    }
+    Game.points+=Math.round(z.reward*mult);
+    Game.score+=Math.round((z.reward+(head?50:0))*mult*comboMul);
+    Game.kills++;
     if(head) Game.headshots++;
   }
   burst(z.mesh.position.clone().setY(1.0),0x8a0f0a,18,3,0.7);
@@ -3280,11 +3495,26 @@ function updatePlayer(dt){
   p.pos.x += (fwdX*fAmt + rgtX*sAmt)*spd*dt;
   p.pos.z += (fwdZ*fAmt + rgtZ*sAmt)*spd*dt;
   resolveCircle(p.pos,p.radius);
-  // head bob
+  // head bob + footsteps
   const moving=len>0.05;
   p.bob += dt*(sprint?14:10)*(moving?1:0);
   const bobY=moving?Math.sin(p.bob)*0.04:0;
   p.pos.y=lerp(p.pos.y,1.6+bobY,0.3);
+  if(moving){ const stepI=Math.floor(p.bob/Math.PI); if(stepI!==p._step){ p._step=stepI; try{Audio.step(sprint);}catch(e){} } }
+  // aim-down-sights blend + dynamic FOV (sprint kick / ADS zoom / sniper FOCUS)
+  Game.adsT=lerp(Game.adsT,(Game.ads&&!isTouch)?1:0,Math.min(1,dt*12));
+  const focusOn=Game.ability&&Game.ability.id==='focus'&&Game.ability.activeUntil>performance.now();
+  const baseF=(Game.settings.fov||72)*(focusOn?0.6:1);
+  const targetF=Math.max(38, baseF - Game.adsT*16 + ((sprint&&moving)?5*(1-Game.adsT):0));
+  if(Math.abs(Game.camera.fov-targetF)>0.05){
+    Game.camera.fov=lerp(Game.camera.fov,targetF,Math.min(1,dt*10));
+    Game.camera.updateProjectionMatrix();
+  }
+  // dynamic crosshair: opens with recoil/movement, tightens when aiming
+  const xh=$('crosshair');
+  if(xh) xh.style.setProperty('--xhs',(1+Game.recoilKick*0.4+(moving?0.12:0)-Game.adsT*0.3).toFixed(3));
+  // combo decay
+  if(Game.combo>0 && performance.now()>Game.comboUntil){ Game.combo=0; $('comboHud').classList.add('hidden'); }
   // camera orientation
   Game.camera.position.copy(p.pos);
   if(Game.shake>0.001){
@@ -3301,8 +3531,12 @@ function updatePlayer(dt){
     const targetSwayX=clamp(mx,-1,1)*0.02 + (sprint?Math.sin(p.bob*0.5)*0.03:0);
     Game.sway.x=lerp(Game.sway.x,moving?Math.sin(p.bob)*0.012:0,0.2);
     Game.sway.y=lerp(Game.sway.y,moving?Math.abs(Math.cos(p.bob))*0.012:0,0.2);
-    Game.weaponMesh.position.set(0.22+Game.sway.x, -0.22-Game.sway.y - (sprint?0.04:0), -0.35+Game.recoilKick*0.04);
-    Game.weaponMesh.rotation.set(Game.recoilKick*0.5, sprint?0.4:0, 0);
+    const swayK=1-Game.adsT*0.75;
+    Game.weaponMesh.position.set(
+      lerp(0.22,0.02,Game.adsT)+Game.sway.x*swayK,
+      lerp(-0.22,-0.165,Game.adsT)-Game.sway.y*swayK - (sprint?0.04*(1-Game.adsT):0),
+      lerp(-0.35,-0.30,Game.adsT)+Game.recoilKick*0.04);
+    Game.weaponMesh.rotation.set(Game.recoilKick*0.5, sprint?0.4*(1-Game.adsT):0, 0);
   }
   // health regen
   if(performance.now()-p.lastHit>4000 && p.hp<p.maxhp){ p.hp=Math.min(p.maxhp,p.hp+(12+4*(Game.runRegen||0))*dt*Game.regenMul); updateHpUI(); }
@@ -3312,6 +3546,9 @@ function updateZombies(dt){
   const pp=Game.player.pos;
   for(let i=Game.zombies.length-1;i>=0;i--){
     const z=Game.zombies[i];
+    // hit flash decay (runs for dying zombies too)
+    if(z.flash>0){ z.flash-=dt;
+      if(z.flash<=0){ if(z.skinMat) z.skinMat.emissiveIntensity=0; if(z.shirtMat) z.shirtMat.emissiveIntensity=0; } }
     if(z.dead){
       z.collapse+=dt*3.2;
       const k=Math.min(z.collapse/(Math.PI/2),1);          // 0→1 fall progress
@@ -3328,6 +3565,13 @@ function updateZombies(dt){
       continue;
     }
     const zp=z.mesh.position;
+    // knockback impulse (decays fast)
+    if(z.kbX||z.kbZ){
+      zp.x+=z.kbX*dt*3.2; zp.z+=z.kbZ*dt*3.2;
+      const kdec=Math.min(1,dt*7); z.kbX-=z.kbX*kdec; z.kbZ-=z.kbZ*kdec;
+      if(Math.abs(z.kbX)<0.02&&Math.abs(z.kbZ)<0.02){ z.kbX=0; z.kbZ=0; }
+      resolveCircle(zp,0.4*z.s);
+    }
     let dx=pp.x-zp.x, dz=pp.z-zp.z;
     const dist=Math.hypot(dx,dz)||1;
     dx/=dist; dz/=dist;
@@ -3358,7 +3602,7 @@ function updateZombies(dt){
         resolveCircle(zp,0.4*z.s);
       }else{
         z.attackCd-=dt;
-        if(z.attackCd<=0){ z.attackCd=0.9; hurtPlayer(z.dmg); }
+        if(z.attackCd<=0){ z.attackCd=0.9; hurtPlayer(z.dmg,zp); }
       }
       if(z.boss) bossSpecials(z,dt,dist);
       if(z.screamer){ z.screamCd-=dt; if(z.screamCd<=0){ z.screamCd=rand(6,9); screamPulse(z); }
@@ -3386,11 +3630,23 @@ function updateZombies(dt){
   }
 }
 
-function hurtPlayer(dmg){
+function hurtPlayer(dmg,srcPos){
   const p=Game.player;
   dmg*=Game.buff.resist;
   p.hp-=dmg; p.lastHit=performance.now();
   flashDamage(); Audio.hurt(); updateHpUI(); addShake(0.18); vibrate(55);
+  // directional damage indicator (arc pointing toward the attacker)
+  if(srcPos){
+    const bearing=Math.atan2(srcPos.x-p.pos.x, srcPos.z-p.pos.z);
+    let rel=bearing-(p.yaw+Math.PI);
+    const deg=-rel*180/Math.PI;
+    const el=$('dmgDir');
+    if(el){
+      el.style.transform='translate(-50%,-50%) rotate('+deg.toFixed(0)+'deg)';
+      el.classList.add('show');
+      clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),600);
+    }
+  }
   if(p.hp<=0){ p.hp=0; updateHpUI(); gameOver(); }
 }
 
@@ -4310,6 +4566,7 @@ function startGame(){
   Game.ammo[sw]=WEAPONS[sw].mag; Game.reserve[sw]=WEAPONS[sw].reserve;
   Game.curWeapon=sw; Game.reloading=false; Game.mouseDown=false;
   Game.score=0; Game.points=(DIFF[Game.difficulty]||DIFF.normal).credits + (Game.upgrades.credits||0)*100; Game.kills=0; Game.headshots=0; Game.wave=0; Game.betweenWaves=false;
+  Game.combo=0; Game.comboUntil=0; Game.ads=false; Game.adsT=0; $('comboHud').classList.add('hidden');
   Game.runGren=0; ensureDaily();
 
   // equipment
