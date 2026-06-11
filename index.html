@@ -2023,29 +2023,116 @@ function updateMapFx(){
   }
 }
 
-// ---------- weapon viewmodel ----------
+// ---------- weapon viewmodel (voxel-built) ----------
 function buildWeaponMesh(){
   if(Game.weaponMesh){ Game.camera.remove(Game.weaponMesh); }
-  const w=WEAPONS[Game.curWeapon];
+  const wname=Game.curWeapon;
+  const w=WEAPONS[wname];
   const g=new THREE.Group();
   const sk=currentSkin();
   const bodyColor = sk.body!=null ? sk.body : w.color;
-  const mat=new THREE.MeshStandardMaterial({color:bodyColor,roughness:sk.rough,metalness:sk.metal,emissive:sk.emissive||0x000000,emissiveIntensity:sk.emint||0});
-  const dark=new THREE.MeshStandardMaterial({color:sk.accent,roughness:.5,metalness:.6});
-  // body
-  let bodyLen=0.5, barLen=0.3, barR=0.04;
-  if(Game.curWeapon==='smg'){bodyLen=0.42;barLen=0.45;}
-  if(Game.curWeapon==='shotgun'){bodyLen=0.4;barLen=0.6;barR=0.06;}
-  const body=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.16,bodyLen),mat); body.position.set(0,-0.02,-bodyLen/2-0.1); g.add(body);
-  const grip=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.22,0.12),dark); grip.position.set(0,-0.18,0.02); grip.rotation.x=0.25; g.add(grip);
-  const barrel=new THREE.Mesh(new THREE.CylinderGeometry(barR,barR,barLen,10),dark);
-  barrel.rotation.x=Math.PI/2; barrel.position.set(0,0,-bodyLen-0.1-barLen/2+0.1); g.add(barrel);
-  // muzzle flash
+  const glowColor = (sk.emissive&&sk.emint) ? sk.emissive : 0x9bff3c;
+
+  // voxel grid: 1 unit = V metres; x is mirrored around the bore axis (+0.5 offset)
+  const V=0.02;
+  const PALETTE={
+    body:  {col:bodyColor, mat:()=>new THREE.MeshStandardMaterial({color:0xffffff,roughness:Math.min(1,sk.rough*1.2),metalness:sk.metal*0.55,emissive:sk.emissive||0x000000,emissiveIntensity:(sk.emint||0)*0.55})},
+    accent:{col:sk.accent, mat:()=>new THREE.MeshStandardMaterial({color:0xffffff,roughness:.7,metalness:.35})},
+    metal: {col:0x8f979e,  mat:()=>new THREE.MeshStandardMaterial({color:0xffffff,roughness:.38,metalness:.8})},
+    wood:  {col:0x7a5226,  mat:()=>new THREE.MeshStandardMaterial({color:0xffffff,roughness:.92,metalness:0})},
+    shell: {col:0xb33226,  mat:()=>new THREE.MeshStandardMaterial({color:0xffffff,roughness:.5,metalness:.1})},
+    brass: {col:0xc9a227,  mat:()=>new THREE.MeshStandardMaterial({color:0xffffff,roughness:.32,metalness:.85})},
+    glow:  {col:glowColor, mat:()=>new THREE.MeshBasicMaterial({color:0xffffff})}
+  };
+  const buckets={}, seen={};
+  function vox(key,x,y,z,jit){
+    const id=x+'|'+y+'|'+z; if(seen[id]) return; seen[id]=1;
+    (buckets[key]=buckets[key]||[]).push([x,y,z,jit==null?0.13:jit]);
+  }
+  function fill(key,x0,x1,y0,y1,z0,z1,jit){ for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++)for(let z=z0;z<=z1;z++) vox(key,x,y,z,jit); }
+
+  let scale=1.35, off=[0,-0.13,0.04], mzv=[4.5,-18], rh=[0,-0.19,0.08,-0.55,-0.12], lh=[-0.07,-0.21,0.1,-0.5,0.4];
+
+  if(wname==='pistol'){
+    fill('accent',-3,-3,4,6,0,2,0.16); fill('accent',2,2,4,6,0,2,0.16); // slide serration pads
+    fill('accent',1,1,6,6,-4,-2,0.1);                                   // ejection port (top right edge)
+    vox('accent',-1,7,1); vox('accent',0,7,1); vox('accent',-1,7,-1); vox('accent',0,7,-1); // top serration stripes
+    fill('body',-2,1,7,7,-8,1,0.1);                                     // slide top ridge
+    fill('body',-2,1,4,6,-9,2);                                         // slide
+    fill('metal',-1,0,4,5,-11,-10);                                     // barrel
+    fill('body',-2,1,2,3,-6,2);                                         // frame
+    fill('accent',-2,1,1,1,-5,-3,0.1);                                  // under-rail
+    for(let k=0;k<8;k++){ const zs=Math.round(k*0.5); fill('accent',-2,1,-k,-k,-1+zs,3+zs,0.16); } // grip
+    fill('accent',-1,0,-2,-2,-6,-1); fill('accent',-1,0,-1,1,-6,-6);    // trigger guard
+    fill('metal',-1,0,-1,0,-4,-4);                                      // trigger
+    fill('accent',-1,0,4,5,3,3);                                        // hammer
+    vox('glow',-2,7,2); vox('glow',1,7,2);                              // rear sights
+    vox('glow',-1,7,-9); vox('glow',0,7,-9);                            // front sight
+    scale=1.3; off=[0,-0.12,0.03]; mzv=[4.5,-12];
+    rh=[0,-0.2,0.1,-0.55,-0.12]; lh=[-0.08,-0.24,0.12,-0.5,0.45];
+  } else if(wname==='smg'){
+    fill('metal',-1,0,4,5,-21,-17);                                     // barrel
+    fill('accent',-2,1,3,6,-22,-22,0.1);                                // muzzle brake
+    fill('accent',-1,0,6,7,-21,-21);                                    // front sight post
+    vox('glow',-1,8,-21); vox('glow',0,8,-21);
+    fill('body',-2,1,2,6,-16,0);                                        // receiver
+    for(let z=-15;z<=-3;z+=2) fill('accent',-1,0,7,7,z,z);              // dashed top rail
+    fill('accent',-1,0,7,8,-1,1);                                       // optic housing
+    vox('glow',-1,8,-2); vox('glow',0,8,-2);                            // optic lens
+    fill('metal',2,2,5,5,-7,-4);                                        // charging handle
+    for(let k=0;k<12;k++){ const zs=Math.round(k*0.35); fill('accent',-1,0,1-k,1-k,-11+zs,-8+zs,0.1); } // curved mag
+    for(let k=0;k<6;k++){ const zs=Math.round(k*0.45); fill('accent',-1,0,1-k,1-k,-2+zs,1+zs,0.12); }   // grip
+    for(let k=0;k<5;k++) fill('accent',-1,0,1-k,1-k,-15,-13,0.1);       // foregrip
+    fill('accent',-1,0,5,5,1,7); fill('accent',-1,0,2,6,7,8,0.1);       // wire stock + butt
+    scale=1.35; off=[0,-0.14,0.06]; mzv=[4.5,-23];
+    rh=[0,-0.2,0.12,-0.55,-0.12]; lh=[-0.03,-0.2,-0.34,-1.1,0.45];
+  } else { // shotgun
+    for(let z=-23;z<=-9;z+=2) fill('accent',-1,0,7,7,z,z,0.1);          // ventilated rib on the barrel
+    fill('metal',-1,0,5,6,-24,-7,0.1);                                  // barrel
+    fill('metal',-1,0,3,4,-21,-7,0.1);                                  // mag tube
+    fill('accent',-1,0,3,4,-22,-22);                                    // tube cap
+    vox('glow',-1,7,-24); vox('glow',0,7,-24);                          // bead sight
+    fill('wood',-2,1,2,4,-17,-11,0.18);                                 // pump
+    fill('accent',-1,0,6,6,-5,-3,0.1);                                  // top loading port
+    fill('body',-2,1,2,6,-6,2);                                         // receiver
+    fill('accent',2,2,3,4,-4,-1,0.1);                                   // ejection port
+    [[-4],[-2],[0]].forEach(p=>{ vox('shell',-3,3,p[0]); vox('brass',-3,3,p[0]+1); }); // side-saddle shells
+    fill('accent',-1,0,0,0,-3,1); fill('accent',-1,0,0,1,-3,-3);        // trigger guard
+    fill('metal',-1,0,1,1,-1,-1);                                       // trigger
+    for(let z=3;z<=9;z++){ const k=z-3, ylo=2+Math.round(k*0.45); fill('wood',-2,1,ylo,6,z,z,0.18); } // stock
+    fill('accent',-2,1,5,6,10,10,0.12);                                 // recoil pad
+    scale=1.28; off=[0,-0.15,-0.02]; mzv=[5.5,-25];
+    rh=[0,-0.18,0.08,-0.55,-0.12]; lh=[-0.02,-0.12,-0.32,-1.15,0.4];
+  }
+
+  // bake voxels into one InstancedMesh per material (per-voxel shade jitter = pixel look)
+  const inner=new THREE.Group(); inner.scale.setScalar(scale); inner.position.set(off[0],off[1],off[2]); g.add(inner);
+  const geo=new THREE.BoxGeometry(V,V,V);
+  const m4=new THREE.Matrix4(), col=new THREE.Color(), base=new THREE.Color();
+  for(const key in buckets){
+    const list=buckets[key], def=PALETTE[key];
+    const im=new THREE.InstancedMesh(geo,def.mat(),list.length);
+    base.setHex(def.col);
+    for(let i=0;i<list.length;i++){
+      const p=list[i];
+      m4.makeTranslation((p[0]+0.5)*V,p[1]*V,p[2]*V);
+      im.setMatrixAt(i,m4);
+      if(im.setColorAt){ const j=1+(Math.random()*2-1)*p[3];
+        col.setRGB(Math.min(1,base.r*j),Math.min(1,base.g*j),Math.min(1,base.b*j)); im.setColorAt(i,col); }
+    }
+    if(!im.setColorAt) im.material.color.setHex(def.col);
+    if(im.instanceColor) im.instanceColor.needsUpdate=true;
+    im.instanceMatrix.needsUpdate=true;
+    im.frustumCulled=false;
+    inner.add(im);
+  }
+
+  // muzzle flash at the new barrel tip
   const mz=new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8),
     new THREE.MeshBasicMaterial({color:0xffe08a,transparent:true,opacity:0}));
-  mz.position.set(0,0,-bodyLen-0.1-barLen+0.05); g.add(mz);
+  mz.position.set(0,mzv[0]*V,mzv[1]*V); inner.add(mz);
   Game.muzzle=mz;
-  const mzLight=new THREE.PointLight(0xffd070,0,6); mzLight.position.copy(mz.position); g.add(mzLight); Game.muzzleLight=mzLight;
+  const mzLight=new THREE.PointLight(0xffd070,0,6); mzLight.position.copy(mz.position); inner.add(mzLight); Game.muzzleLight=mzLight;
 
   // ---- first-person arms holding the weapon ----
   const sleeveMat = TX.fabric ? new THREE.MeshStandardMaterial({map:TX.fabric,color:0x3a4030,roughness:1}) : new THREE.MeshStandardMaterial({color:0x3a4030,roughness:1});
@@ -2057,9 +2144,8 @@ function buildWeaponMesh(){
     const hand=new THREE.Mesh(new THREE.BoxGeometry(0.11,0.085,0.14),gloveMat); hand.position.set(0,0.03,0.02); a.add(hand);
     g.add(a);
   }
-  const foreZ=-bodyLen-0.05;
-  arm(0.0,-0.16,0.05,-0.55,-0.12);    // right hand on the grip
-  arm(-0.02,-0.03,foreZ,-1.15,0.5);   // left hand on the foregrip
+  arm(rh[0],rh[1],rh[2],rh[3],rh[4]);   // right hand on the grip
+  arm(lh[0],lh[1],lh[2],lh[3],lh[4]);   // left hand on the foregrip / pump
 
   g.position.set(0.22,-0.22,-0.35);
   g.traverse(o=>{o.castShadow=false;});
